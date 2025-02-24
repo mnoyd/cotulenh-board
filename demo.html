@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chessground Demo</title>
+
+    <link rel="stylesheet" type="text/css" href="assets/commander-chess-board.css" />
+    <style>
+      body {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      body > div {
+        margin: 10px;
+      }
+
+      .board {
+        width: 600px;
+        height: 650px;
+      }
+
+      cg-board {
+        background-color: #bfcfdd;
+      }
+    </style>
+
+    <script type="module">
+      import { CommanderChessBoard } from './dist/index.js';
+
+      CommanderChessBoard(document.getElementById('board-1'), {orientation: 'blue'});
+    </script>
+  </head>
+  <body>
+    <div>
+      basic board, default config
+      <div class="board" id="board-1">
+        <!-- <cg-container>
+          <cg-board></cg-board>
+        </cg-container> -->
+      </div>
+    </div>
+  </body>
+</html>
