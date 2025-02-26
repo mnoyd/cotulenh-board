@@ -4,14 +4,14 @@ import { renderWrap } from './wrap.js';
 
 export function CommanderChessBoard(element: HTMLElement, config?: any): Api {
   console.log('CommanderChessBoard');
-  const maybeState : HeadlessState = {...defaults(), ...config};
-  function redrawAll():State {
+  const maybeState: HeadlessState = { ...defaults(), ...config };
+  function redrawAll(): State {
     const elements = renderWrap(element, maybeState);
     const state = maybeState as State;
     state.dom = {
-        elements,
-      };
-      return state;
+      elements,
+    };
+    return state;
   }
   return start(redrawAll(), redrawAll);
 }

@@ -78,3 +78,55 @@ cg-board {
   height: 100%;
   pointer-events: none;
 }
+
+.cg-wrap coords {
+  position: absolute;
+  display: flex;
+  pointer-events: none;
+  opacity: 0.8;
+  font-family: sans-serif;
+  font-size: 9px;
+}
+
+.cg-wrap coords.ranks {
+  left: 4px;
+  flex-flow: column-reverse;
+  height: 92.6%;
+  width: 12px;
+  margin: 7.7% 0;
+}
+
+.cg-wrap coords.ranks.blue {
+  flex-flow: column;
+}
+
+.cg-wrap coords.files {
+  bottom: -4px;
+  flex-flow: row;
+  width: 91.7%;
+  height: 16px;
+  text-transform: uppercase;
+  text-align: left;
+  margin: 0 8.3%;
+}
+
+.cg-wrap coords.files.blue {
+  flex-flow: row-reverse;
+}
+.cg-wrap coords.squares {
+  bottom: 0;
+  left: 0;
+  text-transform: uppercase;
+  text-align: right;
+  flex-flow: column-reverse;
+  height: 100%;
+  width: 12.5%;
+}
+
+.cg-wrap coords.squares.blue {
+  flex-flow: column;
+}
+
+.cg-wrap coords coord {
+  flex: 1 1 auto;
+}

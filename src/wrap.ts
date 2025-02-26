@@ -15,5 +15,24 @@ export function renderWrap(element: HTMLElement, s: HeadlessState): any {
   if (s.orientation === 'blue') board.classList.add('board-orientation-blue');
   container.appendChild(board);
 
+  if (s.coordinates) {
+    const orientClass = s.orientation === 'blue' ? 'blue' : '';
+
+    container.appendChild(renderCoords('ranks', orientClass));
+    container.appendChild(renderCoords('files', orientClass));
+  }
+
   return {};
+}
+
+function renderCoords(coordType: string, className: string): HTMLElement {
+  const el = createEl('coords', `${coordType} ${className}`);
+  let f: HTMLElement;
+  const numberOfLine = coordType === 'ranks' ? 11 : 10;
+  for (let i = 0; i <= numberOfLine; i++) {
+    f = createEl('coord');
+    f.textContent = i.toString();
+    el.appendChild(f);
+  }
+  return el;
 }

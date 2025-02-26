@@ -1,13 +1,16 @@
 export interface HeadlessState {
-    orientation?: 'red' | 'blue';
+  orientation?: 'red' | 'blue';
+  coordinates?: boolean;
 }
 
 export interface State extends HeadlessState {
-    dom: any;
-  }
+  dom: any;
+  coordinates: boolean;
+}
 
 export function defaults(): HeadlessState {
   return {
-    orientation: 'red'
+    orientation: 'red',
+    coordinates: true,
   };
 }
