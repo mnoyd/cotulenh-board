@@ -22,7 +22,11 @@ export function renderWrap(element: HTMLElement, s: HeadlessState): any {
     container.appendChild(renderCoords('files', orientClass));
   }
 
-  return {};
+  return {
+    board,
+    container,
+    wrap: element,
+  };
 }
 
 function renderCoords(coordType: string, className: string): HTMLElement {
