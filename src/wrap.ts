@@ -12,7 +12,10 @@ export function renderWrap(element: HTMLElement, s: HeadlessState): any {
   const container = createEl('cg-container');
   element.appendChild(container);
   const board = createEl('cg-board');
-  if (s.orientation === 'blue') board.classList.add('board-orientation-blue');
+  const background = createEl('cg-background');
+  if (s.orientation === 'blue') background.classList.add('board-orientation-blue');
+
+  container.appendChild(background);
   container.appendChild(board);
 
   if (s.coordinates) {

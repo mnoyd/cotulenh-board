@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Chessground Demo</title>
 
-    <link rel="stylesheet" type="text/css" href="assets/commander-chess-pieces.css" />
-    <link rel="stylesheet" type="text/css" href="assets/commander-chess-board.css" />
+    <link rel="stylesheet" type="text/css" href="assets/commander-chess.pieces.css" />
+    <link rel="stylesheet" type="text/css" href="assets/commander-chess.base.css" />
+    <link rel="stylesheet" type="text/css" href="assets/commander-chess.clasic.css" />
     <style>
       body {
         display: flex;
@@ -21,16 +22,12 @@
         width: 600px;
         height: 650px;
       }
-
-      cg-board {
-        background-color: #bfcfdd;
-      }
     </style>
 
     <script type="module">
       import { CommanderChessBoard } from './dist/index.js';
 
-      CommanderChessBoard(document.getElementById('board-1'), { orientation: 'red' });
+      CommanderChessBoard(document.getElementById('board-1'), { orientation: 'blue' });
     </script>
   </head>
   <body>
