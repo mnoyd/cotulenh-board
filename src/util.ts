@@ -15,8 +15,6 @@ export const posToTranslate =
     ((asRed ? 11 - pos[1] : pos[1]) * bounds.height) / 13,
   ];
 
-
-
 export function memo<A>(f: () => A): cg.Memo<A> {
   let v: A | undefined;
   const ret = (): A => {
@@ -29,3 +27,22 @@ export function memo<A>(f: () => A): cg.Memo<A> {
   return ret;
 }
 export const opposite = (c: cg.Color): cg.Color => (c === 'red' ? 'blue' : 'red');
+
+export const allKeys: readonly cg.Key[] = (() => {
+  let allKeys: cg.Key[] = [];
+  for (let i = 0; i < 10; i++) {
+    for (let j = 0; j < 11; j++) {
+      allKeys.push(`${i}-${j}`);
+    }
+  }
+  return allKeys;
+})();
+
+export const samePiece = (p1: cg.Piece, p2: cg.Piece): boolean =>
+  p1.role === p2.role && p1.color === p2.color;
+
+export const distanceSq = (pos1: cg.Pos, pos2: cg.Pos): number => {
+  const dx = pos1[0] - pos2[0],
+    dy = pos1[1] - pos2[1];
+  return dx * dx + dy * dy;
+};

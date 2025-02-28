@@ -1,7 +1,9 @@
-import { State } from "./state.js";
-import * as cg from "./types.js";
+import { State } from './state.js';
+import * as cg from './types.js';
 import * as board from './board.js';
-import { Config } from "./config.js";
+import { applyAnimation, Config, configure } from './config.js';
+import { anim, render } from './anim.js';
+
 export interface Api {
   redrawAll: any;
   set(config: Config): void;
@@ -19,6 +21,8 @@ export function start(state: State, redrawAll: cg.Redraw): Api {
   return {
     set(config): void {
       if (config.orientation && config.orientation !== state.orientation) toggleOrientation();
+      applyAnimation(state, config);
+      (config.fen ? anim : render)(state => configure(state, config), state);
     },
     redrawAll,
     state,

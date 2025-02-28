@@ -9,14 +9,31 @@ export function CommanderChessBoard(element: HTMLElement, config?: any): Api {
   const maybeState: HeadlessState = { ...defaults(), ...config };
   function redrawAll(): State {
     const elements = renderWrap(element, maybeState),
-      bounds = util.memo(() => elements.board.getBoundingClientRect());
+      bounds = util.memo(() => elements.board.getBoundingClientRect()),
+      redrawNow = (): void => {
+        render(state);
+      };
     const state = maybeState as State;
     state.dom = {
       elements,
       bounds,
+      redraw: debounceRedraw(redrawNow),
+      redrawNow
     };
     render(state);
     return state;
   }
   return start(redrawAll(), redrawAll);
+}
+
+function debounceRedraw(redrawNow: () => void): () => void {
+  let redrawing = false;
+  return () => {
+    if (redrawing) return;
+    redrawing = true;
+    requestAnimationFrame(() => {
+      redrawNow();
+      redrawing = false;
+    });
+  };
 }

@@ -45,6 +45,7 @@ export interface Drop {
 }
 export type Pieces = Map<Key, Piece>;
 export type NumberPair = [number, number];
+export type NumberQuad = [number, number, number, number];
 
 export interface Elements {
   board: HTMLElement;
@@ -58,6 +59,8 @@ export interface Elements {
 export interface Dom {
   elements: Elements;
   bounds: Memo<DOMRectReadOnly>;
+  redraw: () => void;
+  redrawNow: (skipSvg?: boolean) => void;
   destroyed?: boolean;
 }
 
@@ -68,3 +71,18 @@ export interface Memo<A> {
 
 export type Redraw = () => void;
 export type FEN = string;
+export type KHz = number;
+export type Dests = Map<Key, Key[]>;
+export interface MoveMetadata {
+  premove: boolean;
+  ctrlKey?: boolean;
+  holdTime?: number;
+  captured?: Piece;
+  predrop?: boolean;
+}
+export type BrushColor = 'green' | 'red' | 'blue' | 'yellow';
+export type KeyPair = [Key, Key];
+
+export interface SetPremoveMetadata {
+  ctrlKey?: boolean;
+}
