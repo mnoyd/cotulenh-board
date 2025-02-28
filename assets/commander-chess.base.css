@@ -1,6 +1,3 @@
-
-
-
 .cg-wrap {
   box-sizing: content-box;
   position: relative;
@@ -29,7 +26,6 @@ cg-background {
   user-select: none;
   background-size: cover;
 }
-
 
 cg-board {
   position: absolute;
