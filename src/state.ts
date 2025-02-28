@@ -2,7 +2,7 @@ import * as cg from './types.js';
 import * as fen from './fen.js';
 
 export interface HeadlessState {
-  orientation?: 'red' | 'blue';
+  orientation: 'red' | 'blue';
   coordinates?: boolean;
   pieces: cg.Pieces;
 }

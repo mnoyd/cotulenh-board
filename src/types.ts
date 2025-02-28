@@ -19,6 +19,7 @@ export const roles = [
   'navy',
   'headquarter',
 ] as const;
+
 export const files = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | (10 as const);
 export const ranks = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | (11 as const);
 
@@ -64,3 +65,6 @@ export interface Memo<A> {
   (): A;
   clear: () => void;
 }
+
+export type Redraw = () => void;
+export type FEN = string;
