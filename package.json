@@ -11,7 +11,8 @@
     "check-format": "prettier --check .",
     "check-exports": "attw --pack .",
     "bundle": "esbuild src/index.ts --bundle --format=esm --outfile=dist/index.min.js --minify",
-    "dist": "$npm_execpath run compile && $npm_execpath run bundle"
+    "dist": "$npm_execpath run compile && $npm_execpath run bundle",
+    "prepare": "husky"
   },
   "keywords": [
     "commander",
@@ -24,8 +25,9 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.17.4",
     "esbuild": "^0.25.0",
-    "prettier": "^3.5.2",
-    "typescript": "^5.7.3"
+    "husky": "^9.1.7",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
   },
   "exports": {
     ".": "./dist/index.js",
