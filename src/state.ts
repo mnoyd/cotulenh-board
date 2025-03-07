@@ -2,6 +2,7 @@ import * as cg from './types.js';
 import * as fen from './fen.js';
 import { AnimCurrent } from './anim.js';
 import { Drawable } from './draw.js';
+import { DragCurrent } from './drag.js';
 
 export interface HeadlessState {
   orientation: cg.Color;
@@ -9,12 +10,16 @@ export interface HeadlessState {
   turnColor: cg.Color; // turn to play.
   pieces: cg.Pieces;
   check?: cg.Key;
-  lastMove?: cg.Key[]
+  lastMove?: cg.Key[];
   animation: {
     enabled: boolean;
     duration: number;
     current?: AnimCurrent;
   };
+  trustAllEvents?: boolean; // disable checking for human only input (e.isTrusted)
+  blockTouchScroll: boolean; // block scrolling via touch dragging on the board, e.g. for coordinate training
+  addDimensionsCssVarsTo?: HTMLElement; // add ---cg-width and ---cg-height CSS vars containing the board's dimensions to this element
+  disableContextMenu: boolean; // because who needs a context menu on a chessboard
   movable: {
     free: boolean; // all moves are valid - board editor
     color?: cg.Color | 'both'; // color that can move. white | black | both
@@ -26,10 +31,14 @@ export interface HeadlessState {
     };
   };
   drawable: Drawable;
+  selectable: {
+    // disable to enforce dragging over click-click move
+    enabled: boolean;
+  };
+  viewOnly: boolean; // don't bind events: the user will never be able to move pieces around
   premovable: {
     enabled: boolean; // allow premoves for color that can not move
     showDests: boolean; // whether to add the premove-dest class on squares
-    castle: boolean; // whether to allow king castle premoves
     dests?: cg.Key[]; // premove destinations for the current selection
     customDests?: cg.Dests; // use custom valid premoves. {"a2" ["a3" "a4"] "b1" ["a3" "c3"]}
     current?: cg.KeyPair; // keys of the current saved premove ["e2" "e4"]
@@ -38,6 +47,46 @@ export interface HeadlessState {
       unset?: () => void; // called after the premove has been unset
     };
   };
+  draggable: {
+    enabled: boolean; // allow moves & premoves to use drag'n drop
+    distance: number; // minimum distance to initiate a drag; in pixels
+    autoDistance: boolean; // lets chessground set distance to zero when user drags pieces
+    showGhost: boolean; // show ghost of piece being dragged
+    deleteOnDropOff: boolean; // delete a piece when it is dropped off the board
+    current?: DragCurrent;
+  };
+  predroppable: {
+    enabled: boolean; // allow predrops for color that can not move
+    current?: {
+      // current saved predrop {role: 'knight'; key: 'e4'}
+      role: cg.Role;
+      key: cg.Key;
+    };
+    events: {
+      set?: (role: cg.Role, key: cg.Key) => void; // called after the predrop has been set
+      unset?: () => void; // called after the predrop has been unset
+    };
+  };
+  dropmode: {
+    active: boolean;
+    piece?: cg.Piece;
+  };
+  events: {
+    change?: () => void; // called after the situation changes on the board
+    // called after a piece has been moved.
+    // capturedPiece is undefined or like {color: 'white'; 'role': 'queen'}
+    move?: (orig: cg.Key, dest: cg.Key, capturedPiece?: cg.Piece) => void;
+    dropNewPiece?: (piece: cg.Piece, key: cg.Key) => void;
+    select?: (key: cg.Key) => void; // called when a square is selected
+    insert?: (elements: cg.Elements) => void; // when the board DOM has been (re)inserted
+  };
+  stats: {
+    // was last piece dragged or clicked?
+    // needs default to false for touch
+    dragged: boolean;
+    ctrlKey?: boolean;
+  };
+  hold: cg.Timer;
   selected?: cg.Key;
 }
 
@@ -47,13 +96,28 @@ export interface State extends HeadlessState {
 
 export function defaults(): HeadlessState {
   return {
+    viewOnly: false,
     pieces: fen.read(fen.initial),
     orientation: 'red',
     turnColor: 'red',
     coordinates: true,
+    disableContextMenu: true,
+    dropmode: {
+      active: false,
+    },
     animation: {
       enabled: true,
       duration: 200,
+    },
+    selectable: {
+      enabled: true,
+    },
+    draggable: {
+      enabled: true,
+      distance: 3,
+      autoDistance: true,
+      showGhost: true,
+      deleteOnDropOff: true,
     },
     movable: {
       free: true,
@@ -64,9 +128,18 @@ export function defaults(): HeadlessState {
     premovable: {
       enabled: true,
       showDests: true,
-      castle: true,
       events: {},
     },
+    predroppable: {
+      enabled: false,
+      events: {},
+    },
+    events: {},
+    stats: {
+      dragged: false,
+    },
+    trustAllEvents: false,
+    blockTouchScroll: false,
     drawable: {
       enabled: true, // can draw
       visible: true, // can view
@@ -93,6 +166,11 @@ export function defaults(): HeadlessState {
         white: { key: 'white', color: 'white', opacity: 1, lineWidth: 10 },
       },
       prevSvgHash: '',
+    },
+    hold: {
+      start: () => {},
+      cancel: () => {},
+      stop: () => 0,
     },
   };
 }

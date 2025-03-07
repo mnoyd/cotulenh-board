@@ -46,3 +46,31 @@ export const distanceSq = (pos1: cg.Pos, pos2: cg.Pos): number => {
     dy = pos1[1] - pos2[1];
   return dx * dx + dy * dy;
 };
+
+export const eventPosition = (e: cg.MouchEvent): cg.NumberPair | undefined => {
+  if (e.clientX || e.clientX === 0) return [e.clientX, e.clientY!];
+  if (e.targetTouches?.[0]) return [e.targetTouches[0].clientX, e.targetTouches[0].clientY];
+  return; // touchend has no position!
+};
+
+export const key2pos = (k: cg.Key): cg.Pos => k.split('-').map(Number) as cg.Pos;
+export const pos2key = (pos: cg.Pos): cg.Key => `${pos[0]}-${pos[1]}`;
+
+export const isRightButton = (e: cg.MouchEvent): boolean => e.button === 2;
+export const allPos: readonly cg.Pos[] = allKeys.map(key2pos);
+
+export function computeSquareCenter(key: cg.Key, asWhite: boolean, bounds: DOMRectReadOnly): cg.NumberPair {
+  const pos = key2pos(key);
+  if (!asWhite) {
+    pos[0] = 7 - pos[0];
+    pos[1] = 7 - pos[1];
+  }
+  return [
+    bounds.left + (bounds.width * pos[0]) / 8 + bounds.width / 16,
+    bounds.top + (bounds.height * (7 - pos[1])) / 8 + bounds.height / 16,
+  ];
+}
+
+export const setVisible = (el: HTMLElement, v: boolean): void => {
+  el.style.visibility = v ? 'visible' : 'hidden';
+};

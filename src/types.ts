@@ -29,10 +29,15 @@ export interface KeyedNode extends HTMLElement {
 export interface PieceNode extends KeyedNode {
   tagName: 'PIECE';
   cgPiece: string;
+  cgAnimating?: boolean;
+  cgFading?: boolean;
+  cgDragging?: boolean;
+  cgScale?: number;
 }
 export interface SquareNode extends KeyedNode {
   tagName: 'SQUARE';
 }
+
 export interface Piece {
   role: Role;
   color: Color;
@@ -61,6 +66,7 @@ export interface Dom {
   bounds: Memo<DOMRectReadOnly>;
   redraw: () => void;
   redrawNow: (skipSvg?: boolean) => void;
+  unbind?: Unbind;
   destroyed?: boolean;
 }
 
@@ -70,6 +76,7 @@ export interface Memo<A> {
 }
 
 export type Redraw = () => void;
+export type Unbind = () => void;
 export type FEN = string;
 export type KHz = number;
 export type Dests = Map<Key, Key[]>;
@@ -85,4 +92,11 @@ export type KeyPair = [Key, Key];
 
 export interface SetPremoveMetadata {
   ctrlKey?: boolean;
+}
+export type MouchEvent = Event & Partial<MouseEvent & TouchEvent>;
+
+export interface Timer {
+  start: () => void;
+  cancel: () => void;
+  stop: () => number;
 }
