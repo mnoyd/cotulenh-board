@@ -88,6 +88,13 @@ export interface HeadlessState {
   };
   hold: cg.Timer;
   selected?: cg.Key;
+  highlight: {
+    lastMove: boolean; // add last-move class to squares
+    check: boolean; // add check class to squares
+    custom?: cg.SquareClasses; // add custom classes to custom squares
+  };
+  exploding?: cg.Exploding;
+  addPieceZIndex: boolean; // adds z-index values to pieces (for 3D)
 }
 
 export interface State extends HeadlessState {
@@ -96,6 +103,11 @@ export interface State extends HeadlessState {
 
 export function defaults(): HeadlessState {
   return {
+    highlight: {
+      lastMove: true,
+      check: true,
+    },
+    addPieceZIndex: false,
     viewOnly: false,
     pieces: fen.read(fen.initial),
     orientation: 'red',

@@ -1,5 +1,5 @@
 import { HeadlessState } from './state';
-import { allPos, computeSquareCenter, opposite, pos2key } from './util';
+import { allPos, computeSquareCenter, opposite, pos2key } from './util.js';
 import * as cg from './types.js';
 import { premove } from './premove.js';
 
@@ -118,8 +118,7 @@ export function unsetPredrop(state: HeadlessState): void {
   }
 }
 function canPremove(state: HeadlessState, orig: cg.Key, dest: cg.Key): boolean {
-  const validPremoves: cg.Key[] =
-    state.premovable.customDests?.get(orig) ?? premove();
+  const validPremoves: cg.Key[] = state.premovable.customDests?.get(orig) ?? premove();
   return orig !== dest && isPremovable(state, orig) && validPremoves.includes(dest);
 }
 
@@ -160,7 +159,7 @@ export function getSnappedKeyAtDomPos(
   asWhite: boolean,
   bounds: DOMRectReadOnly,
 ): cg.Key | undefined {
-  const validSnapPos = allPos
+  const validSnapPos = allPos;
   const validSnapCenters = validSnapPos.map(pos2 => computeSquareCenter(pos2key(pos2), asWhite, bounds));
   const validSnapDistances = validSnapCenters.map(pos2 => distanceSq(pos, pos2));
   const [, closestSnapIndex] = validSnapDistances.reduce(

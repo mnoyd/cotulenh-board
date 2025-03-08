@@ -100,3 +100,8 @@ export interface Timer {
   cancel: () => void;
   stop: () => number;
 }
+export type SquareClasses = Map<Key, string>;
+export interface Exploding {
+  stage: number;
+  keys: readonly Key[];
+}
