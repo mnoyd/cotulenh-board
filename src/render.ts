@@ -8,7 +8,7 @@ import { createEl, translate, posToTranslate as posToTranslateFromBounds, key2po
 type PieceName = string; // `$color $role`
 
 export function render(s: State): void {
-  console.log('render');
+  console.log('render', s);
   const asRed: boolean = orientRed(s),
     posToTranslate = posToTranslateFromBounds(s.dom.bounds()),
     pieces: cg.Pieces = s.pieces,

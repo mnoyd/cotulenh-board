@@ -5,8 +5,9 @@ import { DrawShape, DrawBrushes } from './draw.js';
 import { setCheck, setSelected } from './board.js';
 
 export interface Config {
-  orientation: cg.Color;
-  fen: cg.FEN;
+  orientation?: cg.Color;
+  turnColor?: cg.Color;
+  fen?: cg.FEN;
   check?: cg.Color | boolean; // true for current color, false to unset
   lastMove?: cg.Key[]; // squares part of the last move
   animation?: {

@@ -4,10 +4,17 @@ import { renderWrap } from './wrap.js';
 import * as util from './util.js';
 import { render, renderResized, updateBounds } from './render.js';
 import * as events from './events.js';
+import { Config, configure } from './config.js';
 
-export function CommanderChessBoard(element: HTMLElement, config?: any): Api {
+export function initModule({ el, config }: { el: HTMLElement; config?: Config }): Api {
+  return CommanderChessBoard(el, config);
+}
+
+export function CommanderChessBoard(element: HTMLElement, config?: Config): Api {
   console.log('CommanderChessBoard');
-  const maybeState: HeadlessState | State = { ...defaults(), ...config };
+  const maybeState: State | HeadlessState = defaults();
+
+  configure(maybeState, config || {});
   function redrawAll(): State {
     const prevUnbind = 'dom' in maybeState ? maybeState.dom.unbind : undefined;
     const elements = renderWrap(element, maybeState),
