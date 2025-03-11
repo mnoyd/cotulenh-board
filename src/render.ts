@@ -162,6 +162,10 @@ export function render(s: State): void {
       }
     }
   }
+
+  // remove any element that remains in the moved sets
+  for (const nodes of movedPieces.values()) removeNodes(s, nodes);
+  for (const nodes of movedSquares.values()) removeNodes(s, nodes);
 }
 const pieceNameOf = (piece: cg.Piece): string => `${piece.color} ${piece.role}`;
 
@@ -252,4 +256,8 @@ function appendValue<K, V>(map: Map<K, V[]>, key: K, value: V): void {
   const arr = map.get(key);
   if (arr) arr.push(value);
   else map.set(key, [value]);
+}
+
+function removeNodes(s: State, nodes: HTMLElement[]): void {
+  for (const node of nodes) s.dom.elements.board.removeChild(node);
 }

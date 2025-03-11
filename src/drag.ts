@@ -235,17 +235,3 @@ export function callUserFunction<T extends (...args: any[]) => void>(
 ): void {
   if (f) setTimeout(() => f(...args), 1);
 }
-
-export function baseMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): cg.Piece | boolean {
-  const origPiece = state.pieces.get(orig),
-    destPiece = state.pieces.get(dest);
-  if (orig === dest || !origPiece) return false;
-  const captured = destPiece && destPiece.color !== origPiece.color ? destPiece : undefined;
-  if (dest === state.selected) unselect(state);
-  callUserFunction(state.events.move, orig, dest, captured);
-
-  state.lastMove = [orig, dest];
-  state.check = undefined;
-  callUserFunction(state.events.change);
-  return captured || true;
-}
