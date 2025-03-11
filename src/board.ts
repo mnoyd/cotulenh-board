@@ -70,6 +70,9 @@ export function baseMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): cg.P
   if (dest === state.selected) unselect(state);
   callUserFunction(state.events.move, orig, dest, captured);
 
+  state.pieces.set(dest, origPiece);
+  state.pieces.delete(orig);
+
   state.lastMove = [orig, dest];
   state.check = undefined;
   callUserFunction(state.events.change);
