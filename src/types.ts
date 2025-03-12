@@ -1,7 +1,7 @@
 export type Color = (typeof colors)[number];
 export type Role = (typeof roles)[number];
-export type File = typeof files;
-export type Rank = typeof ranks;
+export type File = (typeof files)[number];
+export type Rank = (typeof ranks)[number];
 export type Key = '0-0' | `${File}-${Rank}`;
 export type Pos = [number, number];
 
@@ -20,8 +20,8 @@ export const roles = [
   'headquarter',
 ] as const;
 
-export const files = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | (10 as const);
-export const ranks = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | (11 as const);
+export const files: readonly number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+export const ranks: readonly number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
 export interface KeyedNode extends HTMLElement {
   cgKey: Key;

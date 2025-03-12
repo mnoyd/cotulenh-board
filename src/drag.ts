@@ -118,13 +118,6 @@ export function dragNewPiece(s: State, piece: cg.Piece, e: cg.MouchEvent, force?
 
 function processDrag(s: State): void {
   requestAnimationFrame(() => {
-    // console.log('processDrag', s.draggable.current);
-    if (s.draggable.current)
-      console.log(
-        'keyadompos',
-        board.getKeyAtDomPos(s.draggable.current!.pos, board.redPov(s), s.dom.bounds()),
-        s.draggable.current?.pos,
-      );
     const cur = s.draggable.current;
     if (!cur) return;
     // cancel animations while dragging

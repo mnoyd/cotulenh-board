@@ -139,6 +139,19 @@ export function render(s: State): void {
           pos[1] += anim[3];
         }
         translate(pMvd, posToTranslate(pos, asRed));
+        //Check if we have promoted star
+        if (p.promoted) {
+          if (!pMvd.querySelector('cg-piece-star')) {
+            // add if no exists
+            const pieceStar = createEl('cg-piece-star') as HTMLElement;
+            pieceStar.style.zIndex = '3';
+            pMvd.appendChild(pieceStar);
+          }
+        } else {
+          // remove it
+          const pieceStarNode = pMvd.querySelector('cg-piece-star') as HTMLElement;
+          if (pieceStarNode) pMvd.removeChild(pieceStarNode);
+        }
       }
       // no piece in moved obj: insert the new piece
       // assumes the new piece is not being dragged
@@ -146,7 +159,11 @@ export function render(s: State): void {
         const pieceName = pieceNameOf(p),
           pieceNode = createEl('piece', pieceName) as cg.PieceNode,
           pos = p.position;
-
+        if (p.promoted) {
+          const pieceStar = createEl('cg-piece-star') as HTMLElement;
+          pieceNode.appendChild(pieceStar);
+          pieceStar.style.zIndex = '3';
+        }
         pieceNode.cgPiece = pieceName;
         pieceNode.cgKey = k;
         if (anim) {

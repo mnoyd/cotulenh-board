@@ -75,3 +75,4 @@ export function computeSquareCenter(key: cg.Key, asWhite: boolean, bounds: DOMRe
 export const setVisible = (el: HTMLElement, v: boolean): void => {
   el.style.visibility = v ? 'visible' : 'hidden';
 };
+export const invRanks: readonly cg.Rank[] = [...cg.ranks].reverse();

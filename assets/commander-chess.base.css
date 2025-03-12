@@ -27,6 +27,18 @@ cg-background {
   background-size: cover;
 }
 
+cg-piece-star {
+  position: absolute;
+  top: 15%;
+  width: 20%;
+  height: 20%;
+  user-select: none;
+  background-size: contain; /* Changed from cover to contain */
+  background-repeat: no-repeat; /*add this line*/
+  background-position: center; /* Add this line */
+  z-index: 3; /* Ensure it is above the pieces */
+}
+
 cg-board {
   position: absolute;
   top: 0;
@@ -85,10 +97,12 @@ cg-board square {
   left: 4.16%;
   width: 8.3%;
   height: 7.7%;
-  background-size: cover;
+  /* background-size: cover; */
   z-index: 2;
   will-change: transform;
   pointer-events: none;
+  display: flex;
+  justify-content: center;
 }
 
 cg-board piece.dragging {
