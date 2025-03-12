@@ -1,7 +1,7 @@
 import * as cg from './types.js';
 
 export const initial: string =
-  '6c4/1n2fh1hf2/3a2g2a1/2n1gt1tg2/2i3s3i/10/10/2I3S3I/2N1GT1TG2/3A2G2A1/1N2FH1HF2/6C4';
+  '6c4/1n2fh1hf2/3a2s2a1/2n1gt1tg2/2i3s3i/10/10/2I3S3I/2N1GT1TG2/3A2S2A1/1N2FH1HF2/6C4';
 
 const roles: { [letter: string]: cg.Role } = {
   c: 'commander',
