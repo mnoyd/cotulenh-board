@@ -148,12 +148,28 @@ export function getKeyAtDomPos(
   asRed: boolean,
   bounds: DOMRectReadOnly,
 ): cg.Key | undefined {
-  let file = Math.floor((11 * (pos[0] - bounds.left)) / bounds.width);
-  if (!asRed) file = 10 - file;
-  let rank = 11 - Math.floor((12 * (pos[1] - bounds.top)) / bounds.height);
-  if (!asRed) rank = 11 - rank;
-  return file >= 0 && file <= 10 && rank >= 0 && rank <= 11 ? `${file}-${rank}` : undefined;
+  // Calculate the file (x-coordinate)
+  const boardWidth = bounds.width;
+  const fileWidth = boardWidth / 12; // 12 total lines, including decorative ones
+  let file = Math.round((pos[0] - bounds.left) / fileWidth) - 1;
+
+  // Calculate the rank (y-coordinate)
+  const boardHeight = bounds.height;
+  const rankHeight = boardHeight / 13; // 13 total lines, including decorative ones
+  let rank = 11 - Math.round((pos[1] - bounds.top) / rankHeight) + 1;
+
+  // Adjust for red perspective
+  if (!asRed) {
+    file = 10 - file;
+    rank = 11 - rank;
+  }
+
+  // Check if it is inside the valid range
+  if (file < 0 || file > 10 || rank < 0 || rank > 11) return undefined;
+
+  return `${file}-${rank}`;
 }
+
 export const redPov = (s: HeadlessState): boolean => s.orientation === 'red';
 
 export function getSnappedKeyAtDomPos(

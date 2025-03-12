@@ -95,8 +95,8 @@ cg-board piece.dragging {
   cursor: move;
   /* !important to override z-index from 3D piece inline style */
   z-index: 11 !important;
-  top: 1.92%;
-  left: 2.08%;
+  /* top: 1.92%;
+  left: 2.08%; */
 }
 
 piece.anim {

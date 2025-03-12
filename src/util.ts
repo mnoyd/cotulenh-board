@@ -8,6 +8,7 @@ export const createEl = (tagName: string, className?: string): HTMLElement => {
 export const translate = (el: HTMLElement, pos: cg.NumberPair): void => {
   el.style.transform = `translate(${pos[0]}px,${pos[1]}px)`;
 };
+
 export const posToTranslate =
   (bounds: DOMRectReadOnly): ((pos: cg.Pos, asRed: boolean) => cg.NumberPair) =>
   (pos, asRed) => [

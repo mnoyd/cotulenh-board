@@ -86,7 +86,7 @@ export function start(s: State, e: cg.MouchEvent): void {
 function pieceCloseTo(s: State, pos: cg.NumberPair): boolean {
   const asRed = board.redPov(s),
     bounds = s.dom.bounds(),
-    radiusSq = Math.pow(bounds.width / 8, 2);
+    radiusSq = Math.pow(bounds.width / 12, 2);
   for (const key of s.pieces.keys()) {
     const center = util.computeSquareCenter(key, asRed, bounds);
     if (util.distanceSq(center, pos) <= radiusSq) return true;
@@ -118,7 +118,13 @@ export function dragNewPiece(s: State, piece: cg.Piece, e: cg.MouchEvent, force?
 
 function processDrag(s: State): void {
   requestAnimationFrame(() => {
-    console.log('processDrag', s.draggable.current);
+    // console.log('processDrag', s.draggable.current);
+    if (s.draggable.current)
+      console.log(
+        'keyadompos',
+        board.getKeyAtDomPos(s.draggable.current!.pos, board.redPov(s), s.dom.bounds()),
+        s.draggable.current?.pos,
+      );
     const cur = s.draggable.current;
     if (!cur) return;
     // cancel animations while dragging
@@ -140,11 +146,14 @@ function processDrag(s: State): void {
         }
 
         const bounds = s.dom.bounds();
+        const fileWidth = bounds.width / 12;
+        const rankHeight = bounds.height / 13;
+        const pieceWidth = bounds.width / 12;
+        const pieceHeight = bounds.height / 13;
         util.translate(cur.element, [
-          cur.pos[0] - bounds.left - bounds.width / 16,
-          cur.pos[1] - bounds.top - bounds.height / 16,
+          cur.pos[0] - bounds.left - fileWidth / 2 - pieceWidth / 2, // Calculate the extra offset
+          cur.pos[1] - bounds.top - rankHeight / 2 - pieceHeight / 2, // Calculate the extra offset
         ]);
-
         cur.keyHasChanged ||= cur.orig !== board.getKeyAtDomPos(cur.pos, board.redPov(s), bounds);
       }
     }
@@ -181,6 +190,17 @@ export function end(s: State, e: cg.MouchEvent): void {
       s.stats.ctrlKey = e.ctrlKey;
       if (board.userMove(s, cur.orig, dest)) s.stats.dragged = true;
     }
+  } else if (!dest && !cur.newPiece) {
+    // Reset the piece to original position
+    if (typeof cur.element === 'function') {
+      const found = cur.element();
+      if (!found) return;
+      found.cgDragging = true;
+      found.classList.add('dragging');
+      cur.element = found;
+    }
+    const origPos = util.posToTranslate(s.dom.bounds())(util.key2pos(cur.orig), board.redPov(s));
+    util.translate(cur.element, [origPos[0] - s.dom.bounds().left, origPos[1] - s.dom.bounds().top]);
   } else if (cur.newPiece) {
     s.pieces.delete(cur.orig);
   } else if (s.draggable.deleteOnDropOff && !dest) {
