@@ -13,3 +13,8 @@ cg-board square.last-move {
 cg-board square.selected {
   background-color: rgba(20, 85, 30, 0.5);
 }
+
+.anti-air-influence {
+  background-color: rgba(255, 0, 0, 0.3); /* Red, semi-transparent */
+  border: 2px solid red;
+}

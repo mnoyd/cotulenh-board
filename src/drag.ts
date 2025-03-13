@@ -4,6 +4,7 @@ import * as util from './util.js';
 import { clear as drawClear } from './draw.js';
 import * as cg from './types.js';
 import { anim } from './anim.js';
+import { updateAntiAirInfluence } from './render.js';
 
 export interface DragCurrent {
   orig: cg.Key; // orig key of dragging piece
@@ -74,6 +75,11 @@ export function start(s: State, e: cg.MouchEvent): void {
       ghost.className = `ghost ${piece.color} ${piece.role}`;
       util.translate(ghost, util.posToTranslate(bounds)(util.key2pos(orig), board.redPov(s)));
       util.setVisible(ghost, true);
+    }
+    if (piece.role === 'air_force') {
+      updateAntiAirInfluence(s);
+    } else {
+      s.highlight.custom = new Map();
     }
     processDrag(s);
   } else {
@@ -205,6 +211,11 @@ export function end(s: State, e: cg.MouchEvent): void {
   else if (!s.selectable.enabled) board.unselect(s);
 
   removeDragElements(s);
+
+  if (s.draggable.current && cur.piece.role === 'air_force') {
+    s.highlight.custom = new Map();
+    s.dom.redraw();
+  }
 
   s.draggable.current = undefined;
   s.dom.redraw();
