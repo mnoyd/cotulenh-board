@@ -3,7 +3,7 @@ import { redPov } from './board.js';
 import { DragCurrent } from './drag.js';
 import { HeadlessState, State } from './state.js';
 import * as cg from './types.js';
-import { createEl, translate, posToTranslate as posToTranslateFromBounds, key2pos, pos2key } from './util.js';
+import { createEl, translate, posToTranslate as posToTranslateFromBounds, key2pos } from './util.js';
 
 type PieceName = string; // `$color $role`
 
@@ -277,42 +277,4 @@ function appendValue<K, V>(map: Map<K, V[]>, key: K, value: V): void {
 
 function removeNodes(s: State, nodes: HTMLElement[]): void {
   for (const node of nodes) s.dom.elements.board.removeChild(node);
-}
-
-export function updateAntiAirInfluence(s: State) {
-  console.log('updateAntiAirInfluence');
-  const antiAirKeys: string[] = [];
-  const pieces = s.pieces;
-  for (const [key, piece] of pieces) {
-    //FIX: correct role name
-    if (piece.role === 'anti_air') {
-      antiAirKeys.push(key);
-    }
-  }
-  s.highlight.custom = new Map();
-  for (const antiAirKey of antiAirKeys) {
-    const pos = key2pos(antiAirKey as cg.Key);
-    //up
-    if (pos[1] < 11) {
-      const key = pos2key([pos[0], pos[1] + 1]);
-      s.highlight.custom.set(key, 'anti-air-influence');
-    }
-    //down
-    if (pos[1] > 0) {
-      const key = pos2key([pos[0], pos[1] - 1]);
-      s.highlight.custom.set(key, 'anti-air-influence');
-    }
-    //left
-    if (pos[0] > 0) {
-      const key = pos2key([pos[0] - 1, pos[1]]);
-      s.highlight.custom.set(key, 'anti-air-influence');
-    }
-    //right
-    if (pos[0] < 11) {
-      const key = pos2key([pos[0] + 1, pos[1]]);
-      s.highlight.custom.set(key, 'anti-air-influence');
-    }
-    // self
-    s.highlight.custom.set(antiAirKey as cg.Key, 'anti-air-influence');
-  }
 }

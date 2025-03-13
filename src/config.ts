@@ -36,6 +36,7 @@ export interface Config {
     brushes?: DrawBrushes;
     onChange?: (shapes: DrawShape[]) => void; // called after drawable shapes change
   };
+  showAirDefenseInfluence?: boolean;
 }
 export function applyAnimation(state: HeadlessState, config: Config): void {
   if (config.animation) {

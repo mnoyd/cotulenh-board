@@ -35,6 +35,7 @@ export interface HeadlessState {
     // disable to enforce dragging over click-click move
     enabled: boolean;
   };
+  showAirDefenseInfluence: boolean; // show air defense influence zones when air_force is selected
   viewOnly: boolean; // don't bind events: the user will never be able to move pieces around
   premovable: {
     enabled: boolean; // allow premoves for color that can not move
@@ -91,7 +92,7 @@ export interface HeadlessState {
   highlight: {
     lastMove: boolean; // add last-move class to squares
     check: boolean; // add check class to squares
-    custom?: cg.SquareClasses; // add custom classes to custom squares
+    custom: cg.SquareClasses; // add custom classes to custom squares
   };
   exploding?: cg.Exploding;
   addPieceZIndex: boolean; // adds z-index values to pieces (for 3D)
@@ -106,6 +107,7 @@ export function defaults(): HeadlessState {
     highlight: {
       lastMove: true,
       check: true,
+      custom: new Map<cg.Key, string>(),
     },
     addPieceZIndex: false,
     viewOnly: false,
@@ -114,6 +116,7 @@ export function defaults(): HeadlessState {
     turnColor: 'red',
     coordinates: true,
     disableContextMenu: true,
+    showAirDefenseInfluence: true,
     dropmode: {
       active: false,
     },

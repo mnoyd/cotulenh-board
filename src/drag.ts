@@ -4,7 +4,7 @@ import * as util from './util.js';
 import { clear as drawClear } from './draw.js';
 import * as cg from './types.js';
 import { anim } from './anim.js';
-import { updateAntiAirInfluence } from './render.js';
+import { updateAirDefenseInfluenceZones } from './air-defense.js';
 
 export interface DragCurrent {
   orig: cg.Key; // orig key of dragging piece
@@ -76,10 +76,10 @@ export function start(s: State, e: cg.MouchEvent): void {
       util.translate(ghost, util.posToTranslate(bounds)(util.key2pos(orig), board.redPov(s)));
       util.setVisible(ghost, true);
     }
-    if (piece.role === 'air_force') {
-      updateAntiAirInfluence(s);
+    if (piece.role === 'air_force' && s.showAirDefenseInfluence) {
+      updateAirDefenseInfluenceZones(s, piece.color);
     } else {
-      s.highlight.custom = new Map();
+      s.highlight.custom.clear();
     }
     processDrag(s);
   } else {
@@ -213,7 +213,7 @@ export function end(s: State, e: cg.MouchEvent): void {
   removeDragElements(s);
 
   if (s.draggable.current && cur.piece.role === 'air_force') {
-    s.highlight.custom = new Map();
+    s.highlight.custom.clear();
     s.dom.redraw();
   }
 
