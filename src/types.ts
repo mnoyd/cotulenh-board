@@ -19,6 +19,8 @@ export const roles = [
   'navy',
   'headquarter',
 ] as const;
+export const airDefenseRoles: Role[] = ['anti_air', 'navy', 'missile'];
+export const isAirDefense = (role: Role): boolean => airDefenseRoles.includes(role);
 
 export const files: readonly number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 export const ranks: readonly number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];

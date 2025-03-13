@@ -76,8 +76,10 @@ export function start(s: State, e: cg.MouchEvent): void {
       util.translate(ghost, util.posToTranslate(bounds)(util.key2pos(orig), board.redPov(s)));
       util.setVisible(ghost, true);
     }
-    if (piece.role === 'air_force' && s.showAirDefenseInfluence) {
-      updateAirDefenseInfluenceZones(s, piece.color);
+    const isAirDefense = cg.airDefenseRoles.includes(piece.role);
+    const isAirForce = piece.role === 'air_force';
+    if (s.showAirDefenseInfluence && (isAirDefense || isAirForce)) {
+      updateAirDefenseInfluenceZones(s, piece);
     } else {
       s.highlight.custom.clear();
     }
@@ -212,7 +214,7 @@ export function end(s: State, e: cg.MouchEvent): void {
 
   removeDragElements(s);
 
-  if (s.draggable.current && cur.piece.role === 'air_force') {
+  if ((s.draggable.current && cur.piece.role === 'air_force') || cg.isAirDefense(cur.piece.role)) {
     s.highlight.custom.clear();
     s.dom.redraw();
   }

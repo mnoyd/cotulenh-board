@@ -14,7 +14,14 @@ cg-board square.selected {
   background-color: rgba(20, 85, 30, 0.5);
 }
 
-.air-defense-influence {
+.air-defense-influence-opponent {
+  /* border-radius: 50%; */
   background-color: rgba(255, 0, 0, 0.3); /* Red, semi-transparent */
-  border: 2px solid red;
+  box-shadow: inset 0 0 0 1000px rgba(255, 0, 0, 0.3);
+}
+
+.air-defense-influence-friendly {
+  /* border-radius: 50%; */
+  background-color: rgba(31, 177, 34, 0.3); /* Green, semi-transparent */
+  box-shadow: inset 0 0 0 1000px rgba(31, 177, 34, 0.3);
 }

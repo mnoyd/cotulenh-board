@@ -57,21 +57,29 @@ export const airDefenseInfluenceZones: AirDefenseInfluenceZone = {
 };
 
 // Generic function to update influence zones
-export function updateAirDefenseInfluenceZones(s: State, airForceColor: cg.Color) {
-  const pieces = s.pieces;
-  const airDefenseRoles: cg.Role[] = ['anti_air', 'navy', 'missile'];
+export function updateAirDefenseInfluenceZones(s: State, selectedPiece: cg.Piece): void {
+  const isAirDefenseSelected = cg.isAirDefense(selectedPiece.role);
   s.highlight.custom.clear();
 
-  for (const [key, piece] of pieces) {
-    if (airDefenseRoles.includes(piece.role) && piece.color !== airForceColor) {
+  Array.from(s.pieces.entries())
+    .filter(([_, piece]) => {
+      if (isAirDefenseSelected) {
+        return cg.isAirDefense(piece.role) && piece.color === selectedPiece.color;
+      } else {
+        return cg.isAirDefense(piece.role) && piece.color !== selectedPiece.color;
+      }
+    })
+    .forEach(([key, piece]) => {
       const getInfluence = airDefenseInfluenceZones[piece.role];
-      if (!getInfluence) continue; // No influence defined for this piece type
+      if (!getInfluence) return; // No influence defined for this piece type
 
       const pos = key2pos(key as cg.Key);
       const influence = getInfluence(pos);
       influence.forEach(infPos => {
-        s.highlight.custom.set(pos2key(infPos), 'air-defense-influence');
+        s.highlight.custom.set(
+          pos2key(infPos),
+          isAirDefenseSelected ? 'air-defense-influence-friendly' : 'air-defense-influence-opponent',
+        );
       });
-    }
-  }
+    });
 }
