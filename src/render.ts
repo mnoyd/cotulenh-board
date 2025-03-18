@@ -158,7 +158,7 @@ export function render(s: State): void {
       else {
         const pieceName = pieceNameOf(p),
           pieceNode = createEl('piece', pieceName) as cg.PieceNode,
-          pos = p.position;
+          pos = key2pos(k);
         if (p.promoted) {
           const pieceStar = createEl('cg-piece-star') as HTMLElement;
           pieceNode.appendChild(pieceStar);
@@ -184,7 +184,11 @@ export function render(s: State): void {
   for (const nodes of movedPieces.values()) removeNodes(s, nodes);
   for (const nodes of movedSquares.values()) removeNodes(s, nodes);
 }
-const pieceNameOf = (piece: cg.Piece): string => `${piece.color} ${piece.role}`;
+const pieceNameOf = (piece: cg.Piece): string => {
+  const base = `${piece.color} ${piece.role}`;
+  const carrying = piece.carrying?.reduce((acc, p) => acc + pieceNameOf(p), base);
+  return base + (carrying ?? '');
+};
 
 export const orientRed = (s: HeadlessState): boolean => s.orientation === 'red';
 
