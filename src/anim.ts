@@ -37,7 +37,7 @@ type AnimPieces = Map<cg.Key, AnimPiece>;
 
 const makePiece = (key: cg.Key, piece: cg.Piece): AnimPiece => ({
   key: key,
-  pos: piece.position,
+  pos: util.key2pos(key),
   piece: piece,
 });
 

@@ -1,3 +1,5 @@
+/* --- Existing styles (no changes here) --- */
+
 .cg-wrap {
   box-sizing: content-box;
   position: relative;
@@ -101,8 +103,8 @@ cg-board square {
   z-index: 2;
   will-change: transform;
   pointer-events: none;
-  display: flex;
-  justify-content: center;
+  display: flex; /* Keep flex for regular pieces */
+  justify-content: center; /* Keep centering for regular pieces */
 }
 
 cg-board piece.dragging {
@@ -184,4 +186,27 @@ piece.fading {
 
 .cg-wrap coords coord {
   flex: 1 1 auto;
+}
+
+/* --- Combined Stack Styles (Corrected) --- */
+
+/* Styles for the combined stack container */
+.cg-wrap piece.combined-stack {
+  overflow: visible; /* Allow children to overflow */
+  pointer-events: auto; /* Make the whole stack clickable */
+  background: none;
+  overflow: visible;
+}
+
+/* Styles for individual pieces WITHIN the stack */
+.cg-wrap piece.combined-stack > piece {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: contain; /* Ensure background image fits */
+  background-position: center;
+  background-repeat: no-repeat;
+  display: block; /* Override flex display */
 }

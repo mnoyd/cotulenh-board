@@ -43,8 +43,8 @@ export interface SquareNode extends KeyedNode {
 export interface Piece {
   role: Role;
   color: Color;
-  position: [File, Rank];
   promoted?: boolean;
+  carrying?: Piece[];
 }
 export interface Drop {
   role: Role;

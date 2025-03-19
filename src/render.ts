@@ -7,6 +7,71 @@ import { createEl, translate, posToTranslate as posToTranslateFromBounds, key2po
 
 type PieceName = string; // `$color $role`
 
+function createCombinedPieceElement(
+  piece: cg.Piece,
+  key: cg.Key, // Add the key parameter
+  pos: cg.Pos,
+  posToTranslate: (pos: cg.Pos, asRed: boolean) => cg.Pos,
+  asRed: boolean,
+  anim?: AnimVector,
+): HTMLElement {
+  const container = createEl('piece', 'combined-stack') as cg.PieceNode;
+  container.cgKey = key; // Set the cgKey for the container!  CRUCIAL
+  container.classList.add('piece'); // Ensure it's treated as a piece
+  if (anim) {
+    container.classList.add('anim');
+  }
+  const basePieceName = `${piece.color} ${piece.role}`;
+  const basePieceNode = createEl('piece', basePieceName) as cg.PieceNode;
+  basePieceNode.cgPiece = basePieceName;
+
+  translate(basePieceNode, [0, 0]); // No offset for carrier
+  basePieceNode.style.zIndex = posZIndex(pos, asRed);
+  container.appendChild(basePieceNode);
+
+  if (piece.promoted) {
+    const pieceStar = createEl('cg-piece-star') as HTMLElement;
+    pieceStar.style.zIndex = '3';
+    basePieceNode.appendChild(pieceStar);
+  }
+
+  if (piece.carrying) {
+    const baseStep = 50;
+    const offsetStepX = 0.1 * baseStep;
+    const offsetStepY = -0.2 * baseStep;
+    let zIndex = parseInt(basePieceNode.style.zIndex, 10) + 1;
+
+    for (let i = 0; i < piece.carrying.length; i++) {
+      const carriedPiece = piece.carrying[i];
+      const carriedPieceName = `${carriedPiece.color} ${carriedPiece.role}`;
+      const carriedPieceNode = createEl('piece', carriedPieceName) as cg.PieceNode;
+      carriedPieceNode.cgPiece = carriedPieceName;
+
+      const offsetX = offsetStepX * (i + 1);
+      const offsetY = offsetStepY * (i + 1);
+
+      translate(carriedPieceNode, [offsetX, offsetY]);
+      carriedPieceNode.style.zIndex = `${zIndex++}`;
+      container.appendChild(carriedPieceNode);
+      if (carriedPiece.promoted) {
+        const pieceStar = createEl('cg-piece-star') as HTMLElement;
+        pieceStar.style.zIndex = '3';
+        carriedPieceNode.appendChild(pieceStar);
+      }
+    }
+  }
+
+  const containerPos = [...pos] as cg.Pos;
+  if (anim) {
+    containerPos[0] += anim[2];
+    containerPos[1] += anim[3];
+  }
+
+  translate(container, posToTranslate(containerPos, asRed));
+  return container;
+}
+//Rest of the code remains the same as the last correct version.
+
 export function render(s: State): void {
   // console.log('render', s);
   const asRed: boolean = orientRed(s),
@@ -46,7 +111,8 @@ export function render(s: State): void {
       // if piece not being dragged anymore, remove dragging style
       if (el.cgDragging && (!curDrag || curDrag.orig !== k)) {
         el.classList.remove('dragging');
-        translate(el, posToTranslate(key2pos(k), asRed));
+        // No need to call translate, will be done by parent div
+        // translate(el, posToTranslate(key2pos(k), asRed));
         el.cgDragging = false;
       }
       // remove fading class if it still remains
@@ -63,11 +129,13 @@ export function render(s: State): void {
           pos[0] += anim[2];
           pos[1] += anim[3];
           el.classList.add('anim');
-          translate(el, posToTranslate(pos, asRed));
+          // No need to call translate, will be done by parent div
+          // translate(el, posToTranslate(pos, asRed));
         } else if (el.cgAnimating) {
           el.cgAnimating = false;
           el.classList.remove('anim');
-          translate(el, posToTranslate(key2pos(k), asRed));
+          // No need to call translate, will be done by parent div
+          // translate(el, posToTranslate(key2pos(k), asRed));
           if (s.addPieceZIndex) el.style.zIndex = posZIndex(key2pos(k), asRed);
         }
         // same piece: flag as same
@@ -122,8 +190,16 @@ export function render(s: State): void {
     if (!samePieces.has(k)) {
       pMvdset = movedPieces.get(pieceNameOf(p));
       pMvd = pMvdset && pMvdset.pop();
+
       // a same piece was moved
       if (pMvd) {
+        // Check if combine, and remove all children if is
+        if (pMvd.classList.contains('combined-stack')) {
+          while (pMvd.firstChild) {
+            pMvd.removeChild(pMvd.firstChild);
+          }
+        }
+
         // apply dom changes
         pMvd.cgKey = k;
         if (pMvd.cgFading) {
@@ -131,50 +207,65 @@ export function render(s: State): void {
           pMvd.cgFading = false;
         }
         const pos = key2pos(k);
-        if (s.addPieceZIndex) pMvd.style.zIndex = posZIndex(pos, asRed);
-        if (anim) {
-          pMvd.cgAnimating = true;
-          pMvd.classList.add('anim');
-          pos[0] += anim[2];
-          pos[1] += anim[3];
-        }
-        translate(pMvd, posToTranslate(pos, asRed));
-        //Check if we have promoted star
-        if (p.promoted) {
-          if (!pMvd.querySelector('cg-piece-star')) {
-            // add if no exists
-            const pieceStar = createEl('cg-piece-star') as HTMLElement;
-            pieceStar.style.zIndex = '3';
-            pMvd.appendChild(pieceStar);
+
+        //If combined, create stack
+        if (p.carrying && p.carrying.length > 0) {
+          // Clean up all children
+          while (pMvd.firstChild) {
+            pMvd.removeChild(pMvd.firstChild);
           }
+          pMvd.replaceWith(createCombinedPieceElement(p, k, pos, posToTranslate, asRed, anim)); //Pass k here
+          // const combinedPieceElement = createCombinedPieceElement(p, pos, posToTranslate, asRed, anim);
+          // pMvd.parentNode!.replaceChild(combinedPieceElement, pMvd);
         } else {
-          // remove it
-          const pieceStarNode = pMvd.querySelector('cg-piece-star') as HTMLElement;
-          if (pieceStarNode) pMvd.removeChild(pieceStarNode);
+          // Normal render
+          if (s.addPieceZIndex) pMvd.style.zIndex = posZIndex(pos, asRed);
+          if (anim) {
+            pMvd.cgAnimating = true;
+            pMvd.classList.add('anim');
+            pos[0] += anim[2];
+            pos[1] += anim[3];
+          }
+          translate(pMvd, posToTranslate(pos, asRed));
+          //Check if we have promoted star
+          if (p.promoted) {
+            if (!pMvd.querySelector('cg-piece-star')) {
+              // add if no exists
+              const pieceStar = createEl('cg-piece-star') as HTMLElement;
+              pieceStar.style.zIndex = '3';
+              pMvd.appendChild(pieceStar);
+            }
+          } else {
+            // remove it
+            const pieceStarNode = pMvd.querySelector('cg-piece-star') as HTMLElement;
+            if (pieceStarNode) pMvd.removeChild(pieceStarNode);
+          }
         }
       }
       // no piece in moved obj: insert the new piece
       // assumes the new piece is not being dragged
       else {
-        const pieceName = pieceNameOf(p),
-          pieceNode = createEl('piece', pieceName) as cg.PieceNode,
-          pos = key2pos(k);
-        if (p.promoted) {
-          const pieceStar = createEl('cg-piece-star') as HTMLElement;
-          pieceNode.appendChild(pieceStar);
-          pieceStar.style.zIndex = '3';
-        }
-        pieceNode.cgPiece = pieceName;
-        pieceNode.cgKey = k;
-        if (anim) {
-          pieceNode.cgAnimating = true;
-          pos[0] += anim[2];
-          pos[1] += anim[3];
-        }
+        const pos = key2pos(k);
+        let pieceNode: HTMLElement;
+        if (p.carrying && p.carrying.length > 0) {
+          pieceNode = createCombinedPieceElement(p, k, pos, posToTranslate, asRed, anim); // Pass k here
+        } else {
+          const pieceName = pieceNameOf(p);
+          pieceNode = createEl('piece', pieceName) as cg.PieceNode;
 
-        translate(pieceNode, posToTranslate(pos, asRed));
+          if (p.promoted) {
+            const pieceStar = createEl('cg-piece-star') as HTMLElement;
+            pieceNode.appendChild(pieceStar);
+            pieceStar.style.zIndex = '3';
+          }
+          (pieceNode as cg.PieceNode).cgPiece = pieceName;
+          if (anim) {
+            pieceNode.classList.add('anim'); // Fix: Use classList.add
+          }
+          translate(pieceNode, posToTranslate(pos, asRed));
+        }
+        (pieceNode as cg.PieceNode).cgKey = k;
         if (s.addPieceZIndex) pieceNode.style.zIndex = posZIndex(pos, asRed);
-
         boardEl.appendChild(pieceNode);
       }
     }
@@ -256,7 +347,9 @@ function computeSquareClasses(s: State): cg.SquareClasses {
   return squares;
 }
 
-const isPieceNode = (el: cg.PieceNode | cg.SquareNode): el is cg.PieceNode => el.tagName === 'PIECE';
+// const isPieceNode = (el: cg.PieceNode | cg.SquareNode): el is cg.PieceNode => el.tagName === 'PIECE';
+const isPieceNode = (el: HTMLElement): el is cg.PieceNode =>
+  el.tagName === 'PIECE' || el.classList.contains('combined-stack');
 const isSquareNode = (el: cg.PieceNode | cg.SquareNode): el is cg.SquareNode => el.tagName === 'SQUARE';
 
 function addSquare(squares: cg.SquareClasses, key: cg.Key, klass: string): void {
