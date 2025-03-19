@@ -59,7 +59,6 @@ export function read(fen: string): cg.Pieces {
           pieces.set(pos2key([col, row]), {
             role: roles[role],
             color: c === role ? 'blue' : 'red',
-            position: [col, row],
             promoted: promoteNextPiece,
           });
           promoteNextPiece = false;

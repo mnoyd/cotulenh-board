@@ -2,6 +2,7 @@ import { HeadlessState } from './state';
 import { allPos, computeSquareCenter, opposite, pos2key } from './util.js';
 import * as cg from './types.js';
 import { premove } from './premove.js';
+import { canCombine, combinePieces } from './combined-pieces.js';
 
 export function toggleOrientation(state: HeadlessState): void {
   state.orientation = opposite(state.orientation);
@@ -63,9 +64,32 @@ function isMovable(state: HeadlessState, orig: cg.Key): boolean {
   );
 }
 export function baseMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): cg.Piece | boolean {
-  const origPiece = state.pieces.get(orig),
-    destPiece = state.pieces.get(dest);
+  const origPiece = state.pieces.get(orig);
+  const destPiece = state.pieces.get(dest);
+
   if (orig === dest || !origPiece) return false;
+
+  // 1. Check for Same Color and Combination
+  if (destPiece && destPiece.color === origPiece.color) {
+    // Attempt to combine
+    if (canCombine(destPiece, origPiece)) {
+      // Combined piece needs to include the carried pieces as well
+      const piecesToCarry = [origPiece, ...(origPiece.carrying || [])]; // Include origPiece and all it carries
+      const combined = combinePieces(destPiece, piecesToCarry);
+      if (combined) {
+        state.pieces.delete(orig); // Remove the original piece (and carried)
+        state.pieces.set(dest, combined); // Place combined at destination
+
+        state.lastMove = [orig, dest];
+        state.check = undefined;
+        callUserFunction(state.events.move, orig, dest, undefined); // No capture
+        callUserFunction(state.events.change);
+        return true;
+      }
+    }
+    return false; // Combination failed
+  }
+
   const captured = destPiece && destPiece.color !== origPiece.color ? destPiece : undefined;
   if (dest === state.selected) unselect(state);
   callUserFunction(state.events.move, orig, dest, captured);
