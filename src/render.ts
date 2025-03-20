@@ -277,7 +277,7 @@ export function render(s: State): void {
   for (const nodes of movedSquares.values()) removeNodes(s, nodes);
 }
 const pieceNameOf = (piece: cg.Piece): string => {
-  const base = `${piece.color} ${piece.role}`;
+  const base = `${piece.color} ${piece.role} ${piece.promoted}`;
   const carrying = piece.carrying?.reduce((acc, p) => acc + pieceNameOf(p), base);
   return base + (carrying ?? '');
 };
