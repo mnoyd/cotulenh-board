@@ -201,7 +201,7 @@ export function end(s: State, e: cg.MouchEvent): void {
       cur.element = found;
     }
     const origPos = util.posToTranslate(s.dom.bounds())(util.key2pos(cur.orig), board.redPov(s));
-    util.translate(cur.element, [origPos[0] - s.dom.bounds().left, origPos[1] - s.dom.bounds().top]);
+    util.translate(cur.element, origPos);
   } else if (cur.newPiece) {
     s.pieces.delete(cur.orig);
   } else if (s.draggable.deleteOnDropOff && !dest) {
