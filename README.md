@@ -15,3 +15,7 @@ Commander Chess board is licensed under the GPL-3.0 license.
 - Under active development
 - Using modern javascript technologies
 - World posibility of customizing the board
+  
+## Wiki
+
+[Commander Chess - Cờ Tư Lệnh](../../wiki)
