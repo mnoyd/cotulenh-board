@@ -14,7 +14,7 @@ function createCombinedPieceElement(
   posToTranslate: (pos: cg.Pos, asRed: boolean) => cg.Pos,
   asRed: boolean,
   anim?: AnimVector,
-): HTMLElement {
+): cg.PieceNode {
   const container = createEl('piece', 'combined-stack') as cg.PieceNode;
   container.cgKey = key; // Set the cgKey for the container!  CRUCIAL
   container.classList.add('piece'); // Ensure it's treated as a piece
@@ -60,6 +60,7 @@ function createCombinedPieceElement(
       }
     }
   }
+  container.cgPiece = pieceNameOf(piece);
 
   const containerPos = [...pos] as cg.Pos;
   if (anim) {

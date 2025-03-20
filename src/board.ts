@@ -87,7 +87,7 @@ export function baseMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): cg.P
         return true;
       }
     }
-    return false; // Combination failed
+    // return false; // Combination failed
   }
 
   const captured = destPiece && destPiece.color !== origPiece.color ? destPiece : undefined;
