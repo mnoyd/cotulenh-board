@@ -1,6 +1,4 @@
-import { State } from './state.js';
 import * as cg from './types.js';
-import { baseMove, baseNewPiece } from './board.js';
 
 export interface CarrierBlueprint {
   maxCapacity: number;
@@ -73,23 +71,6 @@ export function canCombine(carrier: cg.Piece, carried: cg.Piece): boolean {
   return allowedRolesForSlot.includes(carried.role);
 }
 
-// function findCarrierPiece(
-//   origPiece: cg.Piece,
-//   destPiece: cg.Piece
-// ): cg.Piece | undefined {
-//   if(canCarry(origPiece.role, destPiece.role)){
-//       return origPiece;
-//   }
-//   if(canCarry(destPiece.role, origPiece.role)){
-//     return destPiece;
-//   }
-//   return undefined;
-// }
-// function canCarry(carrierRole: cg.Role, carriedRole: cg.Role): boolean{
-//     const blueprint = carrierBlueprints[carrierRole];
-//     if (!blueprint) return false;
-//     return blueprint.canCarryRoles.some(slot => slot.includes(carriedRole));
-// }
 export function canCombineMultiple(carrier: cg.Piece, carried: cg.Piece[]): boolean {
   if (carried.length == 0) {
     return true;
@@ -107,55 +88,47 @@ export function canCombineMultiple(carrier: cg.Piece, carried: cg.Piece[]): bool
   }
   return true;
 }
-// New combinePieces function
-export function combinePieces(
-  // state: State,
-  carrier: cg.Piece,
-  piecesToCarry: cg.Piece[],
-): cg.Piece | undefined {
+
+function determineCarrier(origPiece: cg.Piece, destPiece: cg.Piece): [cg.Piece, cg.Piece] | undefined {
+  const blueprint1 = carrierBlueprints[origPiece.role];
+  const blueprint2 = carrierBlueprints[destPiece.role];
+
+  if (blueprint1 && !blueprint2) {
+    return [origPiece, destPiece];
+  } else if (!blueprint1 && blueprint2) {
+    return [destPiece, origPiece];
+  } else if (blueprint1 && blueprint2) {
+    // Both can carry, check if one can carry the other
+    if (canCombine(origPiece, destPiece)) {
+      return [origPiece, destPiece];
+    } else if (canCombine(destPiece, origPiece)) {
+      return [destPiece, origPiece];
+    } else {
+      return undefined; // Neither can carry the other
+    }
+  } else {
+    return undefined; // Neither is a carrier
+  }
+}
+
+// The main function to try combining pieces
+export function tryCombinePieces(origPiece: cg.Piece, destPiece: cg.Piece): cg.Piece | undefined {
+  const carrierAndCarried = determineCarrier(origPiece, destPiece);
+  if (!carrierAndCarried) {
+    return undefined; // Combination not possible
+  }
+
+  const [carrier, carried] = carrierAndCarried;
+  const piecesToCarry = [carried, ...(carried.carrying || [])];
+
   if (canCombineMultiple(carrier, piecesToCarry)) {
-    if (!carrier.carrying) carrier.carrying = [];
-    carrier.carrying.push(...piecesToCarry);
-    return carrier;
-  }
-  return undefined;
-}
-
-function flattenCarrying(piece: cg.Piece): cg.Piece[] {
-  const flattened: cg.Piece[] = [];
-  if (piece.carrying) {
-    for (const carried of piece.carrying) {
-      flattened.push(carried);
-      flattened.push(...flattenCarrying(carried)); // Recursively flatten nested carrying
+    const combined = { ...carrier }; // Create a *copy* of the carrier
+    if (!combined.carrying) {
+      combined.carrying = [];
     }
+    combined.carrying.push(...piecesToCarry);
+    return combined;
   }
-  return flattened;
-}
 
-export function movePiece(state: State, orig: cg.Key, dest: cg.Key, force?: boolean) {
-  const origPiece = state.pieces.get(orig);
-  const destPiece = state.pieces.get(dest);
-  if (!origPiece) return;
-  if (destPiece && destPiece.role === 'air_force' && origPiece.role === 'tank' && origPiece.carrying) {
-    // If we jump on carrier
-    const piecesToCarry = [origPiece, ...flattenCarrying(origPiece)];
-    const combined = combinePieces(destPiece, piecesToCarry);
-    if (combined) {
-      state.pieces.delete(orig);
-      state.pieces.set(dest, combined);
-      return;
-    }
-  }
-  if (!origPiece.carrying || origPiece.carrying.length === 0) {
-    baseMove(state, orig, dest);
-  }
-  if (origPiece.carrying) {
-    let tmp: cg.Piece = {
-      role: origPiece.role,
-      color: origPiece.color,
-      carrying: origPiece.carrying,
-    };
-    baseNewPiece(state, tmp, dest, force);
-    state.pieces.delete(orig);
-  }
+  return undefined; // Combination failed even with a valid carrier
 }
