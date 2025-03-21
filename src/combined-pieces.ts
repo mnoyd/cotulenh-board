@@ -33,7 +33,7 @@ const headquarterBlueprint: CarrierBlueprint = {
   canCarryRoles: [['commander']], // Slot 0: can carry commander
 };
 
-export const carrierBlueprints: { [key in cg.Role]?: CarrierBlueprint } = {
+const carrierBlueprints: { [key in cg.Role]?: CarrierBlueprint } = {
   navy: navyBlueprint,
   tank: tankBlueprint,
   engineer: engineerBlueprint,
@@ -41,11 +41,12 @@ export const carrierBlueprints: { [key in cg.Role]?: CarrierBlueprint } = {
   headquarter: headquarterBlueprint,
 };
 
-export function canCombine(carrier: cg.Piece, carried: cg.Piece): boolean {
+function canCombine(carrier: cg.Piece, carried: cg.Piece): boolean {
   const blueprint = carrierBlueprints[carrier.role];
   if (!blueprint) {
     return false; // Role doesn't have a blueprint, can't carry anything
   }
+  // Flatten all the pieces that need to be carried
   const allToBeCarried = [carried, ...(carried.carrying || []), ...(carrier.carrying || [])];
 
   if (allToBeCarried.length > blueprint.canCarryRoles.length) {
@@ -53,7 +54,7 @@ export function canCombine(carrier: cg.Piece, carried: cg.Piece): boolean {
   }
   const blueprintSlots = blueprint.canCarryRoles.slice();
   for (const piece of allToBeCarried) {
-    // Check if any of the pieces to be carried are carriers
+    // Find the first slot that can carry this role
     const index = blueprintSlots.findIndex(allowedRoles => allowedRoles.includes(piece.role));
     if (index < 0) {
       return false; // No slot available for this role
