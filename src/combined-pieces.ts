@@ -1,7 +1,6 @@
 import * as cg from './types.js';
 
 export interface CarrierBlueprint {
-  maxCapacity: number;
   canCarryRoles: cg.Role[][]; // 2D array: outer array = slots, inner array = allowed roles for that slot
 }
 
@@ -9,25 +8,21 @@ export const humanlikeRoles: cg.Role[] = ['commander', 'infantry', 'militia'];
 const heavyEquipment: cg.Role[] = ['artillery', 'anti_air', 'missile'];
 
 const navyBlueprint: CarrierBlueprint = {
-  maxCapacity: 2,
   canCarryRoles: [
-    ['tank', 'air_force'], // Slot 0: tank or airforce
+    ['air_force'], // Slot 0: tank or airforce
     [...humanlikeRoles, 'tank'], // Slot 1: humanlike or tank
   ],
 };
 
 const tankBlueprint: CarrierBlueprint = {
-  maxCapacity: 1,
   canCarryRoles: [humanlikeRoles], // Slot 0: can carry humanlike role
 };
 
 const engineerBlueprint: CarrierBlueprint = {
-  maxCapacity: 1,
   canCarryRoles: [heavyEquipment], // Slot 0: can carry heavy equipment
 };
 
 const airForceBlueprint: CarrierBlueprint = {
-  maxCapacity: 2,
   canCarryRoles: [
     ['tank'], // Slot 0: can carry tank
     humanlikeRoles, // Slot 1: can carry humanlike roles
@@ -35,7 +30,6 @@ const airForceBlueprint: CarrierBlueprint = {
 };
 
 const headquarterBlueprint: CarrierBlueprint = {
-  maxCapacity: 1,
   canCarryRoles: [['commander']], // Slot 0: can carry commander
 };
 
@@ -52,63 +46,35 @@ export function canCombine(carrier: cg.Piece, carried: cg.Piece): boolean {
   if (!blueprint) {
     return false; // Role doesn't have a blueprint, can't carry anything
   }
+  const allToBeCarried = [carried, ...(carried.carrying || []), ...(carrier.carrying || [])];
 
-  if (!carrier.carrying) {
-    return blueprint.maxCapacity > 0; // Can carry if no carried pieces yet
+  if (allToBeCarried.length > blueprint.canCarryRoles.length) {
+    return false; // Can't carry more than max capacity
   }
-
-  if (carrier.carrying.length >= blueprint.maxCapacity) {
-    return false; // Already at max capacity
-  }
-
-  const slotIndex = carrier.carrying.length; // Next available slot
-  const allowedRolesForSlot = blueprint.canCarryRoles[slotIndex];
-
-  if (!allowedRolesForSlot) {
-    return false; // No more slots defined for carrying
-  }
-
-  return allowedRolesForSlot.includes(carried.role);
-}
-
-export function canCombineMultiple(carrier: cg.Piece, carried: cg.Piece[]): boolean {
-  if (carried.length == 0) {
-    return true;
-  }
-  for (const piece of carried) {
-    if (!canCombine(carrier, piece)) {
-      return false;
+  const blueprintSlots = blueprint.canCarryRoles.slice();
+  for (const piece of allToBeCarried) {
+    // Check if any of the pieces to be carried are carriers
+    const index = blueprintSlots.findIndex(allowedRoles => allowedRoles.includes(piece.role));
+    if (index < 0) {
+      return false; // No slot available for this role
     }
+    blueprintSlots.splice(index, 1); // Remove the slot from the blueprint
   }
-  if (
-    carrier.carrying &&
-    carrier.carrying.length + carried.length > carrierBlueprints[carrier.role]!.maxCapacity
-  ) {
-    return false;
-  }
+
   return true;
 }
 
 function determineCarrier(origPiece: cg.Piece, destPiece: cg.Piece): [cg.Piece, cg.Piece] | undefined {
-  const blueprint1 = carrierBlueprints[origPiece.role];
-  const blueprint2 = carrierBlueprints[destPiece.role];
+  const blueprintOrig = carrierBlueprints[origPiece.role];
+  const blueprintDest = carrierBlueprints[destPiece.role];
 
-  if (blueprint1 && !blueprint2) {
+  if (blueprintOrig && canCombine(origPiece, destPiece)) {
     return [origPiece, destPiece];
-  } else if (!blueprint1 && blueprint2) {
-    return [destPiece, origPiece];
-  } else if (blueprint1 && blueprint2) {
-    // Both can carry, check if one can carry the other
-    if (canCombine(origPiece, destPiece)) {
-      return [origPiece, destPiece];
-    } else if (canCombine(destPiece, origPiece)) {
-      return [destPiece, origPiece];
-    } else {
-      return undefined; // Neither can carry the other
-    }
-  } else {
-    return undefined; // Neither is a carrier
   }
+  if (blueprintDest && canCombine(destPiece, origPiece)) {
+    return [destPiece, origPiece];
+  }
+  return undefined;
 }
 
 // The main function to try combining pieces
@@ -121,14 +87,10 @@ export function tryCombinePieces(origPiece: cg.Piece, destPiece: cg.Piece): cg.P
   const [carrier, carried] = carrierAndCarried;
   const piecesToCarry = [carried, ...(carried.carrying || [])];
 
-  if (canCombineMultiple(carrier, piecesToCarry)) {
-    const combined = { ...carrier }; // Create a *copy* of the carrier
-    if (!combined.carrying) {
-      combined.carrying = [];
-    }
-    combined.carrying.push(...piecesToCarry);
-    return combined;
+  const combined = { ...carrier }; // Create a *copy* of the carrier
+  if (!combined.carrying) {
+    combined.carrying = [];
   }
-
-  return undefined; // Combination failed even with a valid carrier
+  combined.carrying.push(...piecesToCarry);
+  return combined;
 }

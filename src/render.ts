@@ -6,6 +6,7 @@ import * as cg from './types.js';
 import { createEl, translate, posToTranslate as posToTranslateFromBounds, key2pos } from './util.js';
 
 type PieceName = string; // `$color $role`
+const COMBINED_PIECE_OFFSET_BASE = 50; // Determines the how much the combined pieces are offset from each other
 
 function createCombinedPieceElement(
   piece: cg.Piece,
@@ -36,9 +37,8 @@ function createCombinedPieceElement(
   }
 
   if (piece.carrying) {
-    const baseStep = 50;
-    const offsetStepX = 0.1 * baseStep;
-    const offsetStepY = -0.2 * baseStep;
+    const offsetStepX = 0.1 * COMBINED_PIECE_OFFSET_BASE;
+    const offsetStepY = -0.2 * COMBINED_PIECE_OFFSET_BASE;
     let zIndex = parseInt(basePieceNode.style.zIndex, 10) + 1;
 
     for (let i = 0; i < piece.carrying.length; i++) {
@@ -71,7 +71,6 @@ function createCombinedPieceElement(
   translate(container, posToTranslate(containerPos, asRed));
   return container;
 }
-//Rest of the code remains the same as the last correct version.
 
 export function render(s: State): void {
   // console.log('render', s);
