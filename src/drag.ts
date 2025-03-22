@@ -160,8 +160,8 @@ function processDrag(s: State): void {
         cur.keyHasChanged ||= cur.orig !== keyAtCurrentPosition;
 
         if (
-          cur.temporaryPos !== keyAtCurrentPosition &&
           s.showAirDefenseInfluence &&
+          cur.temporaryPos !== keyAtCurrentPosition &&
           cg.isAirDefense(cur.piece.role) &&
           keyAtCurrentPosition
         ) {
