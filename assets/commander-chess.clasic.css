@@ -14,14 +14,29 @@ cg-board square.selected {
   background-color: rgba(20, 85, 30, 0.5);
 }
 
-.air-defense-influence-opponent {
-  /* border-radius: 50%; */
-  background-color: rgba(255, 0, 0, 0.3); /* Red, semi-transparent */
-  box-shadow: inset 0 0 0 1000px rgba(255, 0, 0, 0.3);
+/* Base styles for all influence markers */
+.air-defense-influence {
+  /* position: relative; */
+  z-index: 3;
+}
+.air-defense-influence::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  /* z-index: 3; */
 }
 
-.air-defense-influence-friendly {
-  /* border-radius: 50%; */
-  background-color: rgba(31, 177, 34, 0.3); /* Green, semi-transparent */
-  box-shadow: inset 0 0 0 1000px rgba(31, 177, 34, 0.3);
+/* Friendly color */
+.air-defense-influence.friendly::before {
+  background-color: rgba(31, 177, 34, 0.6);
+}
+
+/* Opponent color */
+.air-defense-influence.opponent::before {
+  background-color: rgba(255, 0, 0, 0.6);
 }

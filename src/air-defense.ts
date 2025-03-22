@@ -71,14 +71,16 @@ export function updateAirDefenseInfluenceZones(s: State, selectedPiece: cg.Piece
     })
     .forEach(([key, piece]) => {
       const getInfluence = airDefenseInfluenceZones[piece.role];
-      if (!getInfluence) return; // No influence defined for this piece type
+      if (!getInfluence) return;
 
       const pos = key2pos(key as cg.Key);
       const influence = getInfluence(pos);
       influence.forEach(infPos => {
+        const squareKey = pos2key(infPos);
+
         s.highlight.custom.set(
-          pos2key(infPos),
-          isAirDefenseSelected ? 'air-defense-influence-friendly' : 'air-defense-influence-opponent',
+          squareKey,
+          'air-defense-influence ' + (isAirDefenseSelected ? 'friendly' : 'opponent'),
         );
       });
     });
