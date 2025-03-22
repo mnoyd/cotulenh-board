@@ -112,7 +112,7 @@ export function render(s: State): void {
       if (el.cgDragging && (!curDrag || curDrag.orig !== k)) {
         el.classList.remove('dragging');
         // No need to call translate, will be done by parent div
-        // translate(el, posToTranslate(key2pos(k), asRed));
+        translate(el, posToTranslate(key2pos(k), asRed));
         el.cgDragging = false;
       }
       // remove fading class if it still remains
@@ -130,12 +130,12 @@ export function render(s: State): void {
           pos[1] += anim[3];
           el.classList.add('anim');
           // No need to call translate, will be done by parent div
-          // translate(el, posToTranslate(pos, asRed));
+          translate(el, posToTranslate(pos, asRed));
         } else if (el.cgAnimating) {
           el.cgAnimating = false;
           el.classList.remove('anim');
           // No need to call translate, will be done by parent div
-          // translate(el, posToTranslate(key2pos(k), asRed));
+          translate(el, posToTranslate(key2pos(k), asRed));
           if (s.addPieceZIndex) el.style.zIndex = posZIndex(key2pos(k), asRed);
         }
         // same piece: flag as same
