@@ -18,6 +18,7 @@ export interface DragCurrent {
   previouslySelected?: cg.Key;
   originTarget: EventTarget | null;
   keyHasChanged: boolean; // whether the drag has left the orig key
+  temporaryPos?: cg.Key; // potential new position
 }
 
 export function start(s: State, e: cg.MouchEvent): void {
@@ -155,7 +156,21 @@ function processDrag(s: State): void {
           cur.pos[0] - bounds.left - fileWidth / 2 - pieceWidth / 2, // Calculate the extra offset
           cur.pos[1] - bounds.top - rankHeight / 2 - pieceHeight / 2, // Calculate the extra offset
         ]);
-        cur.keyHasChanged ||= cur.orig !== board.getKeyAtDomPos(cur.pos, board.redPov(s), bounds);
+        const keyAtCurrentPosition = board.getKeyAtDomPos(cur.pos, board.redPov(s), bounds);
+        cur.keyHasChanged ||= cur.orig !== keyAtCurrentPosition;
+
+        if (
+          cur.temporaryPos !== keyAtCurrentPosition &&
+          s.showAirDefenseInfluence &&
+          cg.isAirDefense(cur.piece.role) &&
+          keyAtCurrentPosition
+        ) {
+          console.log('updateAirDefenseInfluenceZones called processDrag');
+          // Store the current position to avoid calling updateAirDefenseInfluenceZones multiple times
+          cur.temporaryPos = keyAtCurrentPosition;
+          updateAirDefenseInfluenceZones(s, cur.piece, keyAtCurrentPosition); // Pass keyAtCurrentPosition
+          s.dom.redraw();
+        }
       }
     }
     processDrag(s);

@@ -56,8 +56,11 @@ export const airDefenseInfluenceZones: AirDefenseInfluenceZone = {
   },
 };
 
-// Generic function to update influence zones
-export function updateAirDefenseInfluenceZones(s: State, selectedPiece: cg.Piece): void {
+export function updateAirDefenseInfluenceZones(
+  s: State,
+  selectedPiece: cg.Piece,
+  draggedToKey?: cg.Key,
+): void {
   const isAirDefenseSelected = cg.isAirDefense(selectedPiece.role);
   s.highlight.custom.clear();
 
@@ -73,11 +76,17 @@ export function updateAirDefenseInfluenceZones(s: State, selectedPiece: cg.Piece
       const getInfluence = airDefenseInfluenceZones[piece.role];
       if (!getInfluence) return;
 
-      const pos = key2pos(key as cg.Key);
+      // Use draggedToKey if provided and the piece is the selected one, otherwise use the actual key
+      let pos: cg.Pos;
+      if (draggedToKey && piece.role === selectedPiece.role && piece.color === selectedPiece.color) {
+        pos = key2pos(draggedToKey); // Use the *potential* position
+      } else {
+        pos = key2pos(key as cg.Key); // Use the *actual* position
+      }
+
       const influence = getInfluence(pos);
       influence.forEach(infPos => {
         const squareKey = pos2key(infPos);
-
         s.highlight.custom.set(
           squareKey,
           'air-defense-influence ' + (isAirDefenseSelected ? 'friendly' : 'opponent'),
