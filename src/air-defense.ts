@@ -1,7 +1,7 @@
-// /src/air-defense.ts
 import * as cg from './types.js';
 import { key2pos, pos2key } from './util.js';
 import { State } from './state.js';
+import { findCarriedPieceMatching } from './combined-pieces.js';
 
 // Define Influence Zone Data
 type AirDefenseInfluenceZone = {
@@ -59,38 +59,71 @@ export const airDefenseInfluenceZones: AirDefenseInfluenceZone = {
 export function updateAirDefenseInfluenceZones(
   s: State,
   selectedPiece: cg.Piece,
+  defenseInfluenceZoneType: AirDefenseInfluenceZoneType,
   draggedToKey?: cg.Key,
 ): void {
-  const isAirDefenseSelected = cg.isAirDefense(selectedPiece.role);
   s.highlight.custom.clear();
 
   Array.from(s.pieces.entries())
     .filter(([_, piece]) => {
-      if (isAirDefenseSelected) {
-        return cg.isAirDefense(piece.role) && piece.color === selectedPiece.color;
+      if (defenseInfluenceZoneType === 'friendly') {
+        return isAirDefensePieceOrCarryingAirDefensePiece(piece) && piece.color === selectedPiece.color;
       } else {
-        return cg.isAirDefense(piece.role) && piece.color !== selectedPiece.color;
+        return isAirDefensePieceOrCarryingAirDefensePiece(piece) && piece.color !== selectedPiece.color;
       }
     })
     .forEach(([key, piece]) => {
-      const getInfluence = airDefenseInfluenceZones[piece.role];
-      if (!getInfluence) return;
-
-      // Use draggedToKey if provided and the piece is the selected one, otherwise use the actual key
-      let pos: cg.Pos;
-      if (draggedToKey && piece.role === selectedPiece.role && piece.color === selectedPiece.color) {
-        pos = key2pos(draggedToKey); // Use the *potential* position
-      } else {
-        pos = key2pos(key as cg.Key); // Use the *actual* position
+      // Main piece influence
+      let airDefendPiece: cg.Piece = piece;
+      if (piece.carrying) {
+        const carriedAirDefensePieces = findCarriedPieceMatching(piece, p => cg.isAirDefense(p.role));
+        if (carriedAirDefensePieces) {
+          airDefendPiece = carriedAirDefensePieces;
+        }
       }
-
-      const influence = getInfluence(pos);
-      influence.forEach(infPos => {
-        const squareKey = pos2key(infPos);
-        s.highlight.custom.set(
-          squareKey,
-          'air-defense-influence ' + (isAirDefenseSelected ? 'friendly' : 'opponent'),
-        );
-      });
+      calculateAndHighlightInfluence(s, airDefendPiece, key, draggedToKey, defenseInfluenceZoneType);
     });
+}
+
+function calculateAndHighlightInfluence(
+  s: State,
+  piece: cg.Piece,
+  key: cg.Key | string,
+  draggedToKey: cg.Key | undefined,
+  defenseInfluenceZoneType: AirDefenseInfluenceZoneType,
+) {
+  const getInfluence = airDefenseInfluenceZones[piece.role];
+  if (!getInfluence) return;
+
+  // Use draggedToKey if provided and the piece is the selected one, otherwise use the actual key
+  let pos: cg.Pos;
+  if (draggedToKey && key === s.selected) {
+    pos = key2pos(draggedToKey); // Use the *potential* position
+  } else {
+    pos = key2pos(key as cg.Key); // Use the *actual* position
+  }
+  const influence = getInfluence(pos);
+  influence.forEach(infPos => {
+    const squareKey = pos2key(infPos);
+    s.highlight.custom.set(squareKey, 'air-defense-influence ' + defenseInfluenceZoneType);
+  });
+}
+
+type AirDefenseInfluenceZoneType = 'friendly' | 'opponent';
+
+export function isAirDefenseInfluenceZonePiece(p: cg.Piece): AirDefenseInfluenceZoneType | undefined {
+  if (cg.isAirDefense(p.role)) {
+    return 'friendly';
+  }
+  if (findCarriedPieceMatching(p, p => cg.isAirDefense(p.role))) {
+    return 'friendly';
+  }
+  if (p.role === 'air_force') {
+    return 'opponent';
+  }
+  return undefined;
+}
+
+export function isAirDefensePieceOrCarryingAirDefensePiece(p: cg.Piece): boolean {
+  return cg.isAirDefense(p.role) || findCarriedPieceMatching(p, p => cg.isAirDefense(p.role)) !== undefined;
 }

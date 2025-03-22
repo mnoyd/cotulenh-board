@@ -95,3 +95,13 @@ export function tryCombinePieces(origPiece: cg.Piece, destPiece: cg.Piece): cg.P
   combined.carrying.push(...piecesToCarry);
   return combined;
 }
+
+export function findCarriedPieceMatching(
+  piece: cg.Piece,
+  predicate: (p: cg.Piece) => boolean,
+): cg.Piece | undefined {
+  if (!piece.carrying) {
+    return undefined;
+  }
+  return piece.carrying.find(predicate);
+}

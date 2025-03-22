@@ -4,7 +4,11 @@ import * as util from './util.js';
 import { clear as drawClear } from './draw.js';
 import * as cg from './types.js';
 import { anim } from './anim.js';
-import { updateAirDefenseInfluenceZones } from './air-defense.js';
+import {
+  isAirDefenseInfluenceZonePiece,
+  isAirDefensePieceOrCarryingAirDefensePiece,
+  updateAirDefenseInfluenceZones,
+} from './air-defense.js';
 
 export interface DragCurrent {
   orig: cg.Key; // orig key of dragging piece
@@ -77,10 +81,9 @@ export function start(s: State, e: cg.MouchEvent): void {
       util.translate(ghost, util.posToTranslate(bounds)(util.key2pos(orig), board.redPov(s)));
       util.setVisible(ghost, true);
     }
-    const isAirDefense = cg.airDefenseRoles.includes(piece.role);
-    const isAirForce = piece.role === 'air_force';
-    if (s.showAirDefenseInfluence && (isAirDefense || isAirForce)) {
-      updateAirDefenseInfluenceZones(s, piece);
+    const defenseInfluenceZoneType = isAirDefenseInfluenceZonePiece(piece);
+    if (s.showAirDefenseInfluence && defenseInfluenceZoneType !== undefined) {
+      updateAirDefenseInfluenceZones(s, piece, defenseInfluenceZoneType);
     } else {
       s.highlight.custom.clear();
     }
@@ -162,13 +165,13 @@ function processDrag(s: State): void {
         if (
           s.showAirDefenseInfluence &&
           cur.temporaryPos !== keyAtCurrentPosition &&
-          cg.isAirDefense(cur.piece.role) &&
+          isAirDefensePieceOrCarryingAirDefensePiece(cur.piece) &&
           keyAtCurrentPosition
         ) {
           console.log('updateAirDefenseInfluenceZones called processDrag');
           // Store the current position to avoid calling updateAirDefenseInfluenceZones multiple times
           cur.temporaryPos = keyAtCurrentPosition;
-          updateAirDefenseInfluenceZones(s, cur.piece, keyAtCurrentPosition); // Pass keyAtCurrentPosition
+          updateAirDefenseInfluenceZones(s, cur.piece, 'friendly', keyAtCurrentPosition); // Pass keyAtCurrentPosition
           s.dom.redraw();
         }
       }
@@ -229,7 +232,11 @@ export function end(s: State, e: cg.MouchEvent): void {
 
   removeDragElements(s);
 
-  if ((s.draggable.current && cur.piece.role === 'air_force') || cg.isAirDefense(cur.piece.role)) {
+  if (
+    s.draggable.current &&
+    s.showAirDefenseInfluence &&
+    isAirDefenseInfluenceZonePiece(s.draggable.current.piece)
+  ) {
     s.highlight.custom.clear();
     s.dom.redraw();
   }
