@@ -1,8 +1,8 @@
-**Commander Chess board**
+**Commander Chess board - Cờ Tư Lệnh**
 
 A Javascript library for commander chess board - Cờ tư lệnh.
 
-Inspired by my favorite, battle-hardened lichess.org
+Inspired by my favorite, battle-hardened lichess.org ♟️
 
 [Chessboard](https://github.com/lichess-org/chessground)
 
@@ -15,7 +15,7 @@ Commander Chess board is licensed under the GPL-3.0 license.
 - Under active development
 - Using modern javascript technologies
 - World posibility of customizing the board
-  
+
 ## Wiki
 
-[Commander Chess - Cờ Tư Lệnh](../../wiki)
+[Commander Chess - Cờ Tư Lệnh](https://github.com/mnoyd/commander-chess-board/wiki)
