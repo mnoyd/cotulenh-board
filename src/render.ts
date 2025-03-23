@@ -10,14 +10,12 @@ const COMBINED_PIECE_OFFSET_BASE = 50; // Determines the how much the combined p
 
 function createCombinedPieceElement(
   piece: cg.Piece,
-  key: cg.Key, // Add the key parameter
   pos: cg.Pos,
   posToTranslate: (pos: cg.Pos, asRed: boolean) => cg.Pos,
   asRed: boolean,
   anim?: AnimVector,
 ): cg.PieceNode {
   const container = createEl('piece', 'combined-stack') as cg.PieceNode;
-  container.cgKey = key; // Set the cgKey for the container!  CRUCIAL
   container.classList.add('piece'); // Ensure it's treated as a piece
   if (anim) {
     container.classList.add('anim');
@@ -214,7 +212,7 @@ export function render(s: State): void {
           while (pMvd.firstChild) {
             pMvd.removeChild(pMvd.firstChild);
           }
-          pMvd.replaceWith(createCombinedPieceElement(p, k, pos, posToTranslate, asRed, anim)); //Pass k here
+          pMvd.replaceWith(createCombinedPieceElement(p, pos, posToTranslate, asRed, anim));
           // const combinedPieceElement = createCombinedPieceElement(p, pos, posToTranslate, asRed, anim);
           // pMvd.parentNode!.replaceChild(combinedPieceElement, pMvd);
         } else {
@@ -246,9 +244,9 @@ export function render(s: State): void {
       // assumes the new piece is not being dragged
       else {
         const pos = key2pos(k);
-        let pieceNode: HTMLElement;
+        let pieceNode: cg.PieceNode;
         if (p.carrying && p.carrying.length > 0) {
-          pieceNode = createCombinedPieceElement(p, k, pos, posToTranslate, asRed, anim); // Pass k here
+          pieceNode = createCombinedPieceElement(p, pos, posToTranslate, asRed, anim);
         } else {
           const pieceName = pieceNameOf(p);
           pieceNode = createEl('piece', pieceName) as cg.PieceNode;
@@ -264,7 +262,7 @@ export function render(s: State): void {
           }
           translate(pieceNode, posToTranslate(pos, asRed));
         }
-        (pieceNode as cg.PieceNode).cgKey = k;
+        pieceNode.cgKey = k;
         if (s.addPieceZIndex) pieceNode.style.zIndex = posZIndex(pos, asRed);
         boardEl.appendChild(pieceNode);
       }
