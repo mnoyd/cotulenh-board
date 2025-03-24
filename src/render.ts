@@ -3,7 +3,7 @@ import { redPov } from './board.js';
 import { DragCurrent } from './drag.js';
 import { HeadlessState, State } from './state.js';
 import * as cg from './types.js';
-import { createEl, translate, posToTranslate as posToTranslateFromBounds, key2pos } from './util.js';
+import { createEl, translate, posToTranslate as posToTranslateFromBounds, key2pos, pos2key } from './util.js';
 
 type PieceName = string; // `$color $role`
 const COMBINED_PIECE_OFFSET_BASE = 50; // Determines the how much the combined pieces are offset from each other
@@ -14,17 +14,25 @@ function createCombinedPieceElement(
   posToTranslate: (pos: cg.Pos, asRed: boolean) => cg.Pos,
   asRed: boolean,
   anim?: AnimVector,
+  state?: State,
 ): cg.PieceNode {
   const container = createEl('piece', 'combined-stack') as cg.PieceNode;
-  container.classList.add('piece'); // Ensure it's treated as a piece
+  container.classList.add('piece');
   if (anim) {
     container.classList.add('anim');
   }
+
+  // Create base piece (carrier)
   const basePieceName = `${piece.color} ${piece.role}`;
   const basePieceNode = createEl('piece', basePieceName) as cg.PieceNode;
   basePieceNode.cgPiece = basePieceName;
 
-  translate(basePieceNode, [0, 0]); // No offset for carrier
+  // Apply opacity if there's a selected piece from the stack
+  if (state?.selectedPieceInfo?.isFromStack && state.selectedPieceInfo.originalKey === pos2key(pos)) {
+    basePieceNode.style.opacity = '0.4';
+  }
+
+  translate(basePieceNode, [0, 0]);
   basePieceNode.style.zIndex = posZIndex(pos, asRed);
   container.appendChild(basePieceNode);
 
@@ -45,12 +53,23 @@ function createCombinedPieceElement(
       const carriedPieceNode = createEl('piece', carriedPieceName) as cg.PieceNode;
       carriedPieceNode.cgPiece = carriedPieceName;
 
+      // Apply opacity based on selection
+      if (state?.selectedPieceInfo?.isFromStack && state.selectedPieceInfo.originalKey === pos2key(pos)) {
+        if (state.selectedPieceInfo.carriedPieceIndex === i) {
+          carriedPieceNode.style.opacity = '1';
+          carriedPieceNode.classList.add('selected-stack-piece');
+        } else {
+          carriedPieceNode.style.opacity = '0.4';
+        }
+      }
+
       const offsetX = offsetStepX * (i + 1);
       const offsetY = offsetStepY * (i + 1);
 
       translate(carriedPieceNode, [offsetX, offsetY]);
       carriedPieceNode.style.zIndex = `${zIndex++}`;
       container.appendChild(carriedPieceNode);
+
       if (carriedPiece.promoted) {
         const pieceStar = createEl('cg-piece-star') as HTMLElement;
         pieceStar.style.zIndex = '3';
@@ -212,7 +231,7 @@ export function render(s: State): void {
           while (pMvd.firstChild) {
             pMvd.removeChild(pMvd.firstChild);
           }
-          pMvd.replaceWith(createCombinedPieceElement(p, pos, posToTranslate, asRed, anim));
+          pMvd.replaceWith(createCombinedPieceElement(p, pos, posToTranslate, asRed, anim, s));
           // const combinedPieceElement = createCombinedPieceElement(p, pos, posToTranslate, asRed, anim);
           // pMvd.parentNode!.replaceChild(combinedPieceElement, pMvd);
         } else {
@@ -246,7 +265,7 @@ export function render(s: State): void {
         const pos = key2pos(k);
         let pieceNode: cg.PieceNode;
         if (p.carrying && p.carrying.length > 0) {
-          pieceNode = createCombinedPieceElement(p, pos, posToTranslate, asRed, anim);
+          pieceNode = createCombinedPieceElement(p, pos, posToTranslate, asRed, anim, s);
         } else {
           const pieceName = pieceNameOf(p);
           pieceNode = createEl('piece', pieceName) as cg.PieceNode;

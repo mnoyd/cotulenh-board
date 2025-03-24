@@ -50,10 +50,22 @@ export function unselect(state: HeadlessState): void {
   state.hold.cancel();
 }
 
-export const canMove = (state: HeadlessState, orig: cg.Key, dest: cg.Key): boolean =>
-  orig !== dest &&
-  isMovable(state, orig) &&
-  (state.movable.free || !!state.movable.dests?.get(orig)?.includes(dest));
+export const canMove = (state: HeadlessState, orig: cg.Key, dest: cg.Key): boolean => {
+  // If moving from a stack, use the original key for validation
+  if (state.selectedPieceInfo?.isFromStack) {
+    return (
+      orig === state.selectedPieceInfo.originalKey &&
+      isMovable(state, orig) &&
+      (state.movable.free || !!state.movable.dests?.get(orig)?.includes(dest))
+    );
+  }
+
+  return (
+    orig !== dest &&
+    isMovable(state, orig) &&
+    (state.movable.free || !!state.movable.dests?.get(orig)?.includes(dest))
+  );
+};
 
 function isMovable(state: HeadlessState, orig: cg.Key): boolean {
   const piece = state.pieces.get(orig);
@@ -69,6 +81,52 @@ export function baseMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): cg.P
 
   if (orig === dest || !origPiece) return false;
 
+  // Handle moving a piece from a stack
+  if (state.selectedPieceInfo?.isFromStack && orig === state.selectedPieceInfo.originalKey) {
+    const { originalPiece, carriedPieceIndex } = state.selectedPieceInfo;
+    const carriedPiece = originalPiece.carrying![carriedPieceIndex];
+
+    // If destination has a piece, check for capture or combination
+    if (destPiece) {
+      if (destPiece.color === carriedPiece.color) {
+        // Try to combine the carried piece with destination piece
+        const combined = tryCombinePieces(carriedPiece, destPiece);
+        if (combined) {
+          // Update destination with combined piece
+          state.pieces.set(dest, combined);
+        } else {
+          return false; // Can't combine these pieces
+        }
+      } else {
+        // Capture case
+        if (!isMovable(state, orig)) return false;
+      }
+    } else {
+      // Moving to empty square
+      state.pieces.set(dest, carriedPiece);
+    }
+
+    // Update the original stack
+    const newCarrying = [...originalPiece.carrying!];
+    newCarrying.splice(carriedPieceIndex, 1);
+
+    const updatedOriginalPiece = {
+      ...originalPiece,
+      carrying: newCarrying.length > 0 ? newCarrying : undefined,
+    };
+    state.pieces.set(orig, updatedOriginalPiece);
+
+    // Update state
+    state.lastMove = [orig, dest];
+    state.check = undefined;
+    state.selectedPieceInfo = undefined;
+
+    callUserFunction(state.events.move, orig, dest, destPiece);
+    callUserFunction(state.events.change);
+    return destPiece || true;
+  }
+
+  // Regular piece move handling
   // 1. Check for Same Color and Combination
   if (destPiece && destPiece.color === origPiece.color) {
     // Attempt to combine using tryCombinePieces
@@ -108,6 +166,28 @@ function baseUserMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): cg.Piec
   return result;
 }
 export function userMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): boolean {
+  // Special handling for stack piece moves
+  if (state.selectedPieceInfo?.isFromStack && orig === state.selectedPieceInfo.originalKey) {
+    if (canMove(state, orig, dest)) {
+      const result = baseMove(state, orig, dest);
+      if (result) {
+        const holdTime = state.hold.stop();
+        unselect(state);
+        const metadata: cg.MoveMetadata = {
+          premove: false,
+          ctrlKey: state.stats.ctrlKey,
+          holdTime,
+        };
+        if (result !== true) metadata.captured = result;
+        callUserFunction(state.movable.events.after, orig, dest, metadata);
+        return true;
+      }
+    }
+    unselect(state);
+    return false;
+  }
+
+  // Regular piece move handling
   if (canMove(state, orig, dest)) {
     const result = baseUserMove(state, orig, dest);
     if (result) {
@@ -215,7 +295,9 @@ export const distanceSq = (pos1: cg.Pos, pos2: cg.Pos): number => {
 
 export function selectSquare(state: HeadlessState, key: cg.Key, force?: boolean): void {
   callUserFunction(state.events.select, key);
+
   if (state.selected) {
+    // If the same square is selected and it's not a draggable piece
     if (state.selected === key && !state.draggable.enabled) {
       unselect(state);
       state.hold.cancel();
@@ -227,6 +309,8 @@ export function selectSquare(state: HeadlessState, key: cg.Key, force?: boolean)
       }
     }
   }
+
+  // Handle new selection
   if (
     (state.selectable.enabled || state.draggable.enabled) &&
     (isMovable(state, key) || isPremovable(state, key))

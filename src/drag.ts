@@ -34,6 +34,16 @@ export function start(s: State, e: cg.MouchEvent): void {
     orig = board.getKeyAtDomPos(position, board.redPov(s), bounds);
   if (!orig) return;
   const piece = s.pieces.get(orig);
+  if (!piece) return;
+
+  // Handle combined piece click
+  if (piece.carrying && piece.carrying.length > 0) {
+    import('./combined-piece.js').then(({ showCombinedPiecePopup }) => {
+      showCombinedPiecePopup(s, orig, piece, e);
+    });
+    return;
+  }
+
   const previouslySelected = s.selected;
   if (
     !previouslySelected &&

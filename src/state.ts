@@ -96,6 +96,12 @@ export interface HeadlessState {
   };
   exploding?: cg.Exploding;
   addPieceZIndex: boolean; // adds z-index values to pieces (for 3D)
+  selectedPieceInfo?: {
+    originalKey: cg.Key;
+    originalPiece: cg.Piece;
+    carriedPieceIndex: number;
+    isFromStack: boolean;
+  };
 }
 
 export interface State extends HeadlessState {
