@@ -225,7 +225,7 @@ piece.fading {
 }
 
 .combined-piece-popup piece {
-  cursor: pointer;
+  cursor: grab;
   transition: transform 0.1s;
   width: 50px;
   height: 50px;
@@ -234,7 +234,12 @@ piece.fading {
   background-position: center;
   background-repeat: no-repeat;
   flex-shrink: 0;
-  pointer-events: auto; /* Enable interactions */
+  pointer-events: auto;
+  user-select: none;
+}
+
+.combined-piece-popup piece:active {
+  cursor: grabbing;
 }
 
 .combined-piece-popup piece:hover {
@@ -270,4 +275,8 @@ piece.fading {
 
 .cg-wrap piece.combined-stack piece {
   transition: opacity 0.3s ease;
+}
+
+.dragging {
+  cursor: grabbing !important;
 }

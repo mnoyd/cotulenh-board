@@ -81,9 +81,9 @@ export function baseMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): cg.P
 
   if (orig === dest || !origPiece) return false;
 
-  // Handle moving a piece from a stack
-  if (state.selectedPieceInfo?.isFromStack && orig === state.selectedPieceInfo.originalKey) {
-    const { originalPiece, carriedPieceIndex } = state.selectedPieceInfo;
+  // Handle moving a piece from a stack (either by selection or drag)
+  if (state.selectedPieceInfo?.isFromStack) {
+    const { originalKey, originalPiece, carriedPieceIndex } = state.selectedPieceInfo;
     const carriedPiece = originalPiece.carrying![carriedPieceIndex];
 
     // If destination has a piece, check for capture or combination
@@ -92,14 +92,15 @@ export function baseMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): cg.P
         // Try to combine the carried piece with destination piece
         const combined = tryCombinePieces(carriedPiece, destPiece);
         if (combined) {
-          // Update destination with combined piece
           state.pieces.set(dest, combined);
         } else {
-          return false; // Can't combine these pieces
+          return false;
         }
+      } else if (isMovable(state, orig)) {
+        // Handle capture
+        state.pieces.set(dest, carriedPiece);
       } else {
-        // Capture case
-        if (!isMovable(state, orig)) return false;
+        return false;
       }
     } else {
       // Moving to empty square
@@ -114,14 +115,14 @@ export function baseMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): cg.P
       ...originalPiece,
       carrying: newCarrying.length > 0 ? newCarrying : undefined,
     };
-    state.pieces.set(orig, updatedOriginalPiece);
+    state.pieces.set(originalKey, updatedOriginalPiece);
 
     // Update state
-    state.lastMove = [orig, dest];
+    state.lastMove = [originalKey, dest];
     state.check = undefined;
     state.selectedPieceInfo = undefined;
 
-    callUserFunction(state.events.move, orig, dest, destPiece);
+    callUserFunction(state.events.move, originalKey, dest, destPiece);
     callUserFunction(state.events.change);
     return destPiece || true;
   }

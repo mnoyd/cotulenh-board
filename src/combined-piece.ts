@@ -3,6 +3,7 @@ import * as cg from './types.js';
 import { createEl, translate, posToTranslate } from './util.js';
 import * as board from './board.js';
 import * as util from './util.js';
+import * as drag from './drag.js';
 
 // interface CombinedPiecePopup {
 //   containerEl: HTMLElement;
@@ -37,7 +38,7 @@ export function showCombinedPiecePopup(s: State, key: cg.Key, piece: cg.Piece, e
     piecePos[1] - 60, // Position closer to piece
   ]);
 
-  // Add carrier piece to popup
+  // Add carrier piece to popup with drag support
   const carrierEl = createEl('piece', `${piece.color} ${piece.role}`) as cg.PieceNode;
   carrierEl.classList.add('carrier-piece');
   carrierEl.setAttribute('data-key', key);
@@ -47,20 +48,30 @@ export function showCombinedPiecePopup(s: State, key: cg.Key, piece: cg.Piece, e
     carrierEl.appendChild(pieceStar);
   }
 
-  // Make carrier piece interactive
+  // Make carrier piece interactive with both click and drag
   carrierEl.addEventListener('mousedown', (e: MouseEvent) => {
     e.stopPropagation();
-    handlePieceSelection(s, key);
-    removeCombinedPiecePopup(s);
+    if (e.button === 0) {
+      // Left click only
+      if (e.ctrlKey || e.shiftKey) {
+        // Handle selection for the whole stack
+        handlePieceSelection(s, key);
+        removeCombinedPiecePopup(s);
+      } else {
+        // Start dragging the whole stack
+        drag.dragNewPiece(s, piece, e, false, key);
+        removeCombinedPiecePopup(s);
+      }
+    }
   });
 
   containerEl.appendChild(carrierEl);
 
-  // Add carried pieces to popup
+  // Add carried pieces to popup with drag support
   piece.carrying.forEach((carriedPiece, index) => {
     const pieceEl = createEl('piece', `${carriedPiece.color} ${carriedPiece.role}`) as cg.PieceNode;
     pieceEl.setAttribute('data-index', index.toString());
-    pieceEl.style.cursor = 'pointer';
+    pieceEl.style.cursor = 'grab';
 
     if (carriedPiece.promoted) {
       const pieceStar = createEl('cg-piece-star') as HTMLElement;
@@ -68,11 +79,20 @@ export function showCombinedPiecePopup(s: State, key: cg.Key, piece: cg.Piece, e
       pieceEl.appendChild(pieceStar);
     }
 
-    // Handle click/drag for carried pieces
+    // Handle both click and drag for carried pieces
     pieceEl.addEventListener('mousedown', (e: MouseEvent) => {
       e.stopPropagation();
-      handleCarriedPieceSelection(s, key, piece, index);
-      removeCombinedPiecePopup(s);
+      if (e.button === 0) {
+        // Left click only
+        if (e.ctrlKey || e.shiftKey) {
+          // Handle selection
+          handleCarriedPieceSelection(s, key, piece, index);
+        } else {
+          // Start dragging the individual piece
+          startCarriedPieceDrag(s, key, piece, index, e);
+        }
+        removeCombinedPiecePopup(s);
+      }
     });
 
     containerEl.appendChild(pieceEl);
@@ -146,6 +166,28 @@ export function isStackPieceSelected(s: State, index: number): boolean {
     s.selectedPieceInfo.originalKey === s.selected &&
     s.selectedPieceInfo.carriedPieceIndex === index
   );
+}
+
+// New function to handle dragging a carried piece
+function startCarriedPieceDrag(
+  s: State,
+  originalKey: cg.Key,
+  originalPiece: cg.Piece,
+  pieceIndex: number,
+  e: MouseEvent,
+): void {
+  const carriedPiece = originalPiece.carrying![pieceIndex];
+
+  // Store the selection info for the move handling
+  s.selectedPieceInfo = {
+    originalKey,
+    originalPiece,
+    carriedPieceIndex: pieceIndex,
+    isFromStack: true,
+  };
+
+  // Start the drag operation
+  drag.dragNewPiece(s, carriedPiece, e, false);
 }
 
 function removeCombinedPiecePopup(s: State): void {

@@ -23,6 +23,7 @@ export interface DragCurrent {
   originTarget: EventTarget | null;
   keyHasChanged: boolean; // whether the drag has left the orig key
   temporaryPos?: cg.Key; // potential new position
+  originalStackKey?: cg.Key; // Add this to track if dragging whole stack
 }
 
 export function start(s: State, e: cg.MouchEvent): void {
@@ -116,7 +117,13 @@ function pieceCloseTo(s: State, pos: cg.NumberPair): boolean {
   return false;
 }
 
-export function dragNewPiece(s: State, piece: cg.Piece, e: cg.MouchEvent, force?: boolean): void {
+export function dragNewPiece(
+  s: State,
+  piece: cg.Piece,
+  e: cg.MouchEvent,
+  force?: boolean,
+  originalKey?: cg.Key, // Add parameter for original key when dragging whole stack
+): void {
   const key: cg.Key = '0-0';
   s.pieces.set(key, piece);
   s.dom.redraw();
@@ -134,6 +141,7 @@ export function dragNewPiece(s: State, piece: cg.Piece, e: cg.MouchEvent, force?
     newPiece: true,
     force: !!force,
     keyHasChanged: false,
+    originalStackKey: originalKey, // Add this to track if dragging whole stack
   };
   processDrag(s);
 }
@@ -213,9 +221,13 @@ export function end(s: State, e: cg.MouchEvent): void {
   // touchend has no position; so use the last touchmove position instead
   const eventPos = util.eventPosition(e) || cur.pos;
   const dest = board.getKeyAtDomPos(eventPos, board.redPov(s), s.dom.bounds());
-  if (dest && cur.started && cur.orig !== dest) {
-    if (cur.newPiece) board.dropNewPiece(s, cur.orig, dest, cur.force);
-    else {
+  if (dest) {
+    if (cur.originalStackKey) {
+      // Handle dragging whole stack
+      board.userMove(s, cur.originalStackKey, dest);
+    } else if (cur.newPiece) {
+      board.dropNewPiece(s, cur.orig, dest, cur.force);
+    } else {
       s.stats.ctrlKey = e.ctrlKey;
       if (board.userMove(s, cur.orig, dest)) s.stats.dragged = true;
     }
