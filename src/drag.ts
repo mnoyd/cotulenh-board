@@ -30,8 +30,67 @@ export function start(s: State, e: cg.MouchEvent): void {
   if (!(s.trustAllEvents || e.isTrusted)) return; // only trust when trustAllEvents is enabled
   if (e.buttons !== undefined && e.buttons > 1) return; // only touch or left click
   if (e.touches && e.touches.length > 1) return; // support one finger touch only
+
+  const position = util.eventPosition(e)!;
+
+  // Check if we have an active popup and if the click is inside it
+  // In the start function where we handle combined piece popup clicks
+  if (s.combinedPiecePopup) {
+    import('./combined-piece.js').then(({ isPositionInPopup, removeCombinedPiecePopup }) => {
+      const { inPopup, pieceIndex } = isPositionInPopup(s, position);
+
+      if (inPopup) {
+        e.preventDefault();
+        if (!s.combinedPiecePopup) return;
+        const { key, piece } = s.combinedPiecePopup;
+
+        if (pieceIndex === -1) {
+          // Carrier piece clicked
+          if (e.ctrlKey || e.shiftKey) {
+            // Handle selection for the whole stack
+            board.selectSquare(s, key);
+          } else {
+            // Start dragging the whole stack
+            dragNewPiece(s, piece, e, false, key);
+          }
+        } else if (pieceIndex !== undefined) {
+          // Carried piece clicked
+          if (e.ctrlKey || e.shiftKey) {
+            // Handle selection
+            s.selectedPieceInfo = {
+              originalKey: key,
+              originalPiece: piece,
+              carriedPieceIndex: pieceIndex,
+              isFromStack: true,
+            };
+            s.selected = key;
+            s.dom.redraw();
+          } else {
+            // Select the carried piece for click-based movement
+            s.selectedPieceInfo = {
+              originalKey: key,
+              originalPiece: piece,
+              carriedPieceIndex: pieceIndex,
+              isFromStack: true,
+            };
+            s.selected = key; // Mark the original position as selected
+            s.dom.redraw();
+          }
+        }
+
+        removeCombinedPiecePopup(s);
+        return;
+      } else {
+        // Click outside popup, remove it
+        removeCombinedPiecePopup(s);
+      }
+    });
+
+    // Don't continue with normal drag if we're handling popup
+    return;
+  }
+
   const bounds = s.dom.bounds(),
-    position = util.eventPosition(e)!,
     orig = board.getKeyAtDomPos(position, board.redPov(s), bounds);
   if (!orig) return;
   const piece = s.pieces.get(orig);
@@ -40,7 +99,7 @@ export function start(s: State, e: cg.MouchEvent): void {
   // Handle combined piece click
   if (piece.carrying && piece.carrying.length > 0) {
     import('./combined-piece.js').then(({ showCombinedPiecePopup }) => {
-      showCombinedPiecePopup(s, orig, piece, e);
+      showCombinedPiecePopup(s, orig, piece, position);
     });
     return;
   }
@@ -221,8 +280,18 @@ export function end(s: State, e: cg.MouchEvent): void {
   // touchend has no position; so use the last touchmove position instead
   const eventPos = util.eventPosition(e) || cur.pos;
   const dest = board.getKeyAtDomPos(eventPos, board.redPov(s), s.dom.bounds());
+
   if (dest) {
-    if (cur.originalStackKey) {
+    // Handle piece from stack being dragged
+    if (s.selectedPieceInfo?.isFromStack && cur.newPiece) {
+      const { originalKey } = s.selectedPieceInfo;
+
+      // Treat this as a move from the original position to the destination
+      board.userMove(s, originalKey, dest);
+
+      // The userMove function in board.ts will handle removing the piece from the stack
+      // and placing it at the destination, including captures and combinations
+    } else if (cur.originalStackKey) {
       // Handle dragging whole stack
       board.userMove(s, cur.originalStackKey, dest);
     } else if (cur.newPiece) {
@@ -248,6 +317,7 @@ export function end(s: State, e: cg.MouchEvent): void {
     s.pieces.delete(cur.orig);
     board.callUserFunction(s.events.change);
   }
+
   if ((cur.orig === cur.previouslySelected || cur.keyHasChanged) && (cur.orig === dest || !dest))
     board.unselect(s);
   else if (!s.selectable.enabled) board.unselect(s);

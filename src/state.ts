@@ -102,6 +102,11 @@ export interface HeadlessState {
     carriedPieceIndex: number;
     isFromStack: boolean;
   };
+  combinedPiecePopup?: {
+    key: cg.Key;
+    piece: cg.Piece;
+    containerEl: HTMLElement;
+  };
 }
 
 export interface State extends HeadlessState {

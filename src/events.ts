@@ -63,7 +63,6 @@ function unbindable(
   el.addEventListener(eventName, callback, options);
   return () => el.removeEventListener(eventName, callback, options);
 }
-
 const startDragOrDraw =
   (s: State): MouchBind =>
   e => {

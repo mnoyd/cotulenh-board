@@ -298,8 +298,15 @@ export function selectSquare(state: HeadlessState, key: cg.Key, force?: boolean)
   callUserFunction(state.events.select, key);
 
   if (state.selected) {
+    // If a piece from a stack is selected and we're clicking on a destination
+    if (state.selectedPieceInfo?.isFromStack && state.selected === state.selectedPieceInfo.originalKey) {
+      if (userMove(state, state.selected, key)) {
+        state.stats.dragged = false;
+        return;
+      }
+    }
     // If the same square is selected and it's not a draggable piece
-    if (state.selected === key && !state.draggable.enabled) {
+    else if (state.selected === key && !state.draggable.enabled) {
       unselect(state);
       state.hold.cancel();
       return;
