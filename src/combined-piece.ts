@@ -173,7 +173,7 @@ export function startCarriedPieceDrag(
   };
 
   // Start the drag operation with the carried piece
-  drag.dragNewPiece(s, carriedPiece, e, false);
+  drag.dragNewPiece(s, carriedPiece, e, originalKey, false);
 }
 
 export function removeCombinedPiecePopup(s: State): void {
