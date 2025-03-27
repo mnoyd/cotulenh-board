@@ -9,6 +9,12 @@ import {
   isAirDefensePieceOrCarryingAirDefensePiece,
   updateAirDefenseInfluenceZones,
 } from './air-defense.js';
+import {
+  showCombinedPiecePopup,
+  isPositionInPopup,
+  removeCombinedPiecePopup,
+  startCarriedPieceDrag,
+} from './combined-piece.js';
 
 export interface DragCurrent {
   orig: cg.Key; // orig key of dragging piece
@@ -36,58 +42,51 @@ export function start(s: State, e: cg.MouchEvent): void {
   // Check if we have an active popup and if the click is inside it
   // In the start function where we handle combined piece popup clicks
   if (s.combinedPiecePopup) {
-    import('./combined-piece.js').then(({ isPositionInPopup, removeCombinedPiecePopup }) => {
-      const { inPopup, pieceIndex } = isPositionInPopup(s, position);
+    const { inPopup, pieceIndex } = isPositionInPopup(s, position);
+    if (inPopup) {
+      e.preventDefault();
+      if (!s.combinedPiecePopup) return;
+      const { key, piece } = s.combinedPiecePopup;
 
-      if (inPopup) {
-        e.preventDefault();
-        if (!s.combinedPiecePopup) return;
-        const { key, piece } = s.combinedPiecePopup;
-
-        if (pieceIndex === -1) {
-          // Carrier piece clicked
-          if (e.ctrlKey || e.shiftKey) {
-            // Handle selection for the whole stack
-            board.selectSquare(s, key);
-          } else {
-            // Start dragging the whole stack
-            dragNewPiece(s, piece, e, false, key);
-          }
-        } else if (pieceIndex !== undefined) {
-          // Carried piece clicked
-          if (e.ctrlKey || e.shiftKey) {
-            // Handle selection
-            s.selectedPieceInfo = {
-              originalKey: key,
-              originalPiece: piece,
-              carriedPieceIndex: pieceIndex,
-              isFromStack: true,
-            };
-            s.selected = key;
-            s.dom.redraw();
-          } else {
-            // Select the carried piece for click-based movement
-            s.selectedPieceInfo = {
-              originalKey: key,
-              originalPiece: piece,
-              carriedPieceIndex: pieceIndex,
-              isFromStack: true,
-            };
-            s.selected = key; // Mark the original position as selected
-            s.dom.redraw();
-          }
+      if (pieceIndex === -1) {
+        // Carrier piece clicked
+        if (e.ctrlKey || e.shiftKey) {
+          board.selectSquare(s, key);
+        } else {
+          dragNewPiece(s, piece, e, key, false);
         }
+      } else if (pieceIndex !== undefined) {
+        // Carried piece clicked
+        if (e.ctrlKey || e.shiftKey) {
+          s.selectedPieceInfo = {
+            originalKey: key,
+            originalPiece: piece,
+            carriedPieceIndex: pieceIndex,
+            isFromStack: true,
+          };
+          s.selected = key;
+          s.dom.redraw();
+        } else {
+          // Start dragging the carried piece
 
-        removeCombinedPiecePopup(s);
-        return;
-      } else {
-        // Click outside popup, remove it
-        removeCombinedPiecePopup(s);
+          startCarriedPieceDrag(s, key, piece, pieceIndex, e);
+          s.selectedPieceInfo = {
+            originalKey: key,
+            originalPiece: piece,
+            carriedPieceIndex: pieceIndex,
+            isFromStack: true,
+          };
+        }
       }
-    });
 
-    // Don't continue with normal drag if we're handling popup
-    return;
+      removeCombinedPiecePopup(s);
+      return;
+    } else {
+      // Click outside popup, remove it
+      removeCombinedPiecePopup(s);
+    }
+    // Remove this return statement to allow normal piece selection
+    // return;
   }
 
   const bounds = s.dom.bounds(),
@@ -98,9 +97,7 @@ export function start(s: State, e: cg.MouchEvent): void {
 
   // Handle combined piece click
   if (piece.carrying && piece.carrying.length > 0) {
-    import('./combined-piece.js').then(({ showCombinedPiecePopup }) => {
-      showCombinedPiecePopup(s, orig, piece, position);
-    });
+    showCombinedPiecePopup(s, orig, piece, position);
     return;
   }
 
@@ -180,10 +177,10 @@ export function dragNewPiece(
   s: State,
   piece: cg.Piece,
   e: cg.MouchEvent,
+  originalKey: cg.Key,
   force?: boolean,
-  originalKey?: cg.Key, // Add parameter for original key when dragging whole stack
 ): void {
-  const key: cg.Key = '0-0';
+  const key: cg.Key = '11-12';
   s.pieces.set(key, piece);
   s.dom.redraw();
 
@@ -209,6 +206,9 @@ function processDrag(s: State): void {
   requestAnimationFrame(() => {
     const cur = s.draggable.current;
     if (!cur) return;
+    if (s.combinedPiecePopup) {
+      removeCombinedPiecePopup(s);
+    }
     // cancel animations while dragging
     if (s.animation.current?.plan.anims.has(cur.orig)) s.animation.current = undefined;
     // if moving piece is gone, cancel
@@ -288,12 +288,13 @@ export function end(s: State, e: cg.MouchEvent): void {
 
       // Treat this as a move from the original position to the destination
       board.userMove(s, originalKey, dest);
-
+      s.pieces.delete('11-12');
       // The userMove function in board.ts will handle removing the piece from the stack
       // and placing it at the destination, including captures and combinations
     } else if (cur.originalStackKey) {
       // Handle dragging whole stack
       board.userMove(s, cur.originalStackKey, dest);
+      s.pieces.delete('11-12');
     } else if (cur.newPiece) {
       board.dropNewPiece(s, cur.orig, dest, cur.force);
     } else {
@@ -301,6 +302,9 @@ export function end(s: State, e: cg.MouchEvent): void {
       if (board.userMove(s, cur.orig, dest)) s.stats.dragged = true;
     }
   } else if (!dest && !cur.newPiece) {
+    if (cur.originalStackKey) {
+      s.pieces.delete('11-12');
+    }
     // Reset the piece to original position
     if (typeof cur.element === 'function') {
       const found = cur.element();

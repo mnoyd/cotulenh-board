@@ -280,3 +280,7 @@ piece.fading {
 .dragging {
   cursor: grabbing !important;
 }
+
+.cg-wrap piece.ghost {
+  opacity: 0.3;
+}

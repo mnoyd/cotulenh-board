@@ -87,6 +87,7 @@ export function tryCombinePieces(origPiece: cg.Piece, destPiece: cg.Piece): cg.P
 
   const [carrier, carried] = carrierAndCarried;
   const piecesToCarry = [carried, ...(carried.carrying || [])];
+  carried.carrying = undefined; // Clear the carrying as it have been flattened
 
   const combined = { ...carrier }; // Create a *copy* of the carrier
   if (!combined.carrying) {
