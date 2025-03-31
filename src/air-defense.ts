@@ -1,7 +1,7 @@
 import * as cg from './types.js';
 import { key2pos, pos2key } from './util.js';
 import { State } from './state.js';
-import { findCarriedPieceMatching } from './combined-pieces.js';
+import { findCarriedPieceMatching } from './combined-piece.js';
 
 // Define Influence Zone Data
 type AirDefenseInfluenceZone = {

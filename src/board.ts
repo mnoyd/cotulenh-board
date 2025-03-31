@@ -2,7 +2,7 @@ import { HeadlessState } from './state';
 import { allPos, computeSquareCenter, opposite, pos2key } from './util.js';
 import * as cg from './types.js';
 import { premove } from './premove.js';
-import { tryCombinePieces } from './combined-pieces.js'; // Import
+import { tryCombinePieces } from './combined-piece.js'; // Import
 
 export function toggleOrientation(state: HeadlessState): void {
   state.orientation = opposite(state.orientation);
