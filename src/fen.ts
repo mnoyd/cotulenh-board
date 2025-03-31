@@ -2,9 +2,9 @@ import * as cg from './types.js';
 import { invRanks, pos2key } from './util.js';
 
 export const initial_no_engineer: string =
-  '6c4/1n2fh1hf2/3a2s2a1/2n1gt1tg2/2i3m3i/10/10/2I3M3I/2N1GT1TG2/3A2S2A1/1N2FH1HF2/6C4';
+  '6c4/1n2fh1hf2/3a2s2a1/2n1gt1tg2/2i3m3i/11/11/2I3M3I/2N1GT1TG2/3A2S2A1/1N2FH1HF2/6C4';
 export const initial: string =
-  '6c4/1n2fh1hf2/3a2s2a1/2n1gt1tg2/2ie2m2ei/10/10/2IE2M2EI/2N1GT1TG2/3A2S2A1/1N2FH1HF2/6C4';
+  '6c4/1n2fh1hf2/3a2s2a1/2n1gt1tg2/2ie2m2ei/11/11/2IE2M2EI/2N1GT1TG2/3A2S2A1/1N2FH1HF2/6C4';
 
 const roles: { [letter: string]: cg.Role } = {
   c: 'commander',
