@@ -93,10 +93,9 @@ export function start(s: State, e: cg.MouchEvent): void {
     orig = board.getKeyAtDomPos(position, board.redPov(s), bounds);
   if (!orig) return;
   const piece = s.pieces.get(orig);
-  if (!piece) return;
 
   // Handle combined piece click
-  if (piece.carrying && piece.carrying.length > 0) {
+  if (piece && piece.carrying && piece.carrying.length > 0) {
     showCombinedPiecePopup(s, orig, piece, position);
     return;
   }
@@ -281,7 +280,7 @@ export function end(s: State, e: cg.MouchEvent): void {
   const eventPos = util.eventPosition(e) || cur.pos;
   const dest = board.getKeyAtDomPos(eventPos, board.redPov(s), s.dom.bounds());
 
-  if (dest) {
+  if (dest && cur.started && cur.orig !== dest) {
     // Handle piece from stack being dragged
     if (s.selectedPieceInfo?.isFromStack && cur.newPiece) {
       const { originalKey } = s.selectedPieceInfo;
