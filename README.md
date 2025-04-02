@@ -1,5 +1,7 @@
 **Commander Chess board - Cờ Tư Lệnh**
 
+![Co Tu Lenh Board](/screenshot/random_board.png)
+
 A Javascript library for commander chess board - Cờ tư lệnh.
 
 Inspired by my favorite, battle-hardened lichess.org ♟️
