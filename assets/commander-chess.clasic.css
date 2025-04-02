@@ -40,3 +40,11 @@ cg-board square.selected {
 .air-defense-influence.opponent::before {
   background-color: rgba(255, 0, 0, 0.6);
 }
+
+/* Highlight for a selected piece within a combined stack */
+piece.selected-stack-piece {
+  outline: 2px solid yellow; /* Or another visual indicator */
+  outline-offset: 1px;
+  /* Ensure it's visually distinct even with opacity changes */
+  box-shadow: 0 0 5px 2px yellow;
+}

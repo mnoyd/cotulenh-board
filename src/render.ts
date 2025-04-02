@@ -53,14 +53,21 @@ function createCombinedPieceElement(
       const carriedPieceNode = createEl('piece', carriedPieceName) as cg.PieceNode;
       carriedPieceNode.cgPiece = carriedPieceName;
 
-      // Apply opacity based on selection
+      // Apply opacity and highlight class based on selection
       if (state?.selectedPieceInfo?.isFromStack && state.selectedPieceInfo.originalKey === pos2key(pos)) {
         if (state.selectedPieceInfo.carriedPieceIndex === i) {
-          carriedPieceNode.style.opacity = '1';
-          carriedPieceNode.classList.add('selected-stack-piece');
+          // This is the selected piece in the stack
+          carriedPieceNode.style.opacity = '1'; // Ensure full opacity
+          carriedPieceNode.classList.add('selected-stack-piece'); // Add highlight class
         } else {
-          carriedPieceNode.style.opacity = '0.4';
+          // Other pieces in the stack when one is selected
+          carriedPieceNode.style.opacity = '0.4'; // Dim other pieces
+          carriedPieceNode.classList.remove('selected-stack-piece'); // Ensure highlight class is removed
         }
+      } else {
+        // No piece selected from this stack, ensure normal state
+        carriedPieceNode.style.opacity = '1';
+        carriedPieceNode.classList.remove('selected-stack-piece');
       }
 
       const offsetX = offsetStepX * (i + 1);

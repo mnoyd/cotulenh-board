@@ -13,7 +13,7 @@ import {
   showCombinedPiecePopup,
   isPositionInPopup,
   removeCombinedPiecePopup,
-  startCarriedPieceDrag,
+  // startCarriedPieceDrag,
 } from './combined-piece.js';
 
 export interface DragCurrent {
@@ -67,20 +67,24 @@ export function start(s: State, e: cg.MouchEvent): void {
           s.selected = key;
           s.dom.redraw();
         } else {
-          // Start dragging the carried piece
-
-          startCarriedPieceDrag(s, key, piece, pieceIndex, e);
+          // --- Select the carried piece for a subsequent move ---
           s.selectedPieceInfo = {
-            originalKey: key,
-            originalPiece: piece,
-            carriedPieceIndex: pieceIndex,
+            originalKey: key, // Key of the stack
+            originalPiece: piece, // The whole stack piece
+            carriedPieceIndex: pieceIndex, // Index of the selected piece within carrying array
             isFromStack: true,
           };
+          s.selected = key; // Select the square where the stack is
+          // No drag initiated here, just selection set.
+          // The next click on a valid square will trigger the move via selectSquare -> userMove -> baseMove
         }
       }
 
-      removeCombinedPiecePopup(s);
-      return;
+      removeCombinedPiecePopup(s); // Close popup after interaction
+      // No return here, allow flow to continue if needed, though popup interaction usually ends here.
+      // However, we need redraw after selection and popup removal.
+      s.dom.redraw();
+      return; // Explicitly return after handling popup interaction.
     } else {
       // Click outside popup, remove it
       removeCombinedPiecePopup(s);
