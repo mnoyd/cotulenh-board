@@ -51,12 +51,17 @@ export function start(s: State, e: cg.MouchEvent): void {
       if (pieceIndex === -1) {
         // Carrier piece clicked
         if (e.ctrlKey || e.shiftKey) {
+          // Multi-select the stack (existing logic)
           board.selectSquare(s, key);
         } else {
-          dragNewPiece(s, piece, e, key, false);
+          // --- Select the entire stack for a subsequent move ---
+          s.selected = key; // Select the square where the stack is
+          s.selectedPieceInfo = undefined; // IMPORTANT: Clear stack info to indicate moving the whole piece
+          // No drag initiated here, just selection set.
+          // The next click on a valid square will trigger the move via selectSquare -> userMove -> baseMove
         }
       } else if (pieceIndex !== undefined) {
-        // Carried piece clicked
+        // Carried piece clicked (logic implemented previously)
         if (e.ctrlKey || e.shiftKey) {
           s.selectedPieceInfo = {
             originalKey: key,
