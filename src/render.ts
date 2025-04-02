@@ -249,16 +249,19 @@ export function render(s: State): void {
             while (pMvd!.firstChild) {
               pMvd!.removeChild(pMvd!.firstChild);
             }
-            // Replace the animated element with the final static combined element
-            const combinedPieceElement = createCombinedPieceElement(
-              p,
-              pos,
-              posToTranslate,
-              asRed,
-              undefined,
-              s,
-            );
-            pMvd!.replaceWith(combinedPieceElement);
+            const parent = pMvd!.parentNode;
+            if (parent) {
+              const combinedPieceElement = createCombinedPieceElement(
+                p,
+                pos,
+                posToTranslate,
+                asRed,
+                undefined,
+                s,
+              );
+              parent.removeChild(pMvd!); // Explicitly remove old node
+              parent.appendChild(combinedPieceElement); // Append new node
+            }
           } else {
             // --- Normal Piece Final State ---
             // Remove animation class and flag if it was animating
