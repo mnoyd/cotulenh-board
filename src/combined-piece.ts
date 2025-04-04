@@ -3,7 +3,6 @@ import * as cg from './types.js';
 import { createEl, translate, posToTranslate } from './util.js';
 import * as board from './board.js';
 import * as util from './util.js';
-import * as drag from './drag.js';
 
 // ----- Combined Piece Logic: Carrier Blueprints and Combining Rules -----
 
@@ -236,28 +235,6 @@ export function isStackPieceSelected(s: State, index: number): boolean {
     s.selectedPieceInfo.originalKey === s.selected &&
     s.selectedPieceInfo.carriedPieceIndex === index
   );
-}
-
-// New function to handle dragging a carried piece
-export function startCarriedPieceDrag(
-  s: State,
-  originalKey: cg.Key,
-  originalPiece: cg.Piece,
-  pieceIndex: number,
-  e: cg.MouchEvent,
-): void {
-  const carriedPiece = originalPiece.carrying![pieceIndex];
-
-  // Store the selection info for the move handling
-  s.selectedPieceInfo = {
-    originalKey,
-    originalPiece,
-    carriedPieceIndex: pieceIndex,
-    isFromStack: true,
-  };
-
-  // Start the drag operation with the carried piece
-  drag.dragNewPiece(s, carriedPiece, e, originalKey, false);
 }
 
 export function removeCombinedPiecePopup(s: State): void {

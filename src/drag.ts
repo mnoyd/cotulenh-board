@@ -9,12 +9,7 @@ import {
   isAirDefensePieceOrCarryingAirDefensePiece,
   updateAirDefenseInfluenceZones,
 } from './air-defense.js';
-import {
-  showCombinedPiecePopup,
-  isPositionInPopup,
-  removeCombinedPiecePopup,
-  // startCarriedPieceDrag,
-} from './combined-piece.js';
+import { showCombinedPiecePopup, isPositionInPopup, removeCombinedPiecePopup } from './combined-piece.js';
 
 export interface DragCurrent {
   orig: cg.Key; // orig key of dragging piece
@@ -179,35 +174,6 @@ function pieceCloseTo(s: State, pos: cg.NumberPair): boolean {
     if (util.distanceSq(center, pos) <= radiusSq) return true;
   }
   return false;
-}
-
-export function dragNewPiece(
-  s: State,
-  piece: cg.Piece,
-  e: cg.MouchEvent,
-  originalKey: cg.Key,
-  force?: boolean,
-): void {
-  const key: cg.Key = '11-12';
-  s.pieces.set(key, piece);
-  s.dom.redraw();
-
-  const position = util.eventPosition(e)!;
-
-  s.draggable.current = {
-    orig: key,
-    piece,
-    origPos: position,
-    pos: position,
-    started: true,
-    element: () => pieceElementByKey(s, key),
-    originTarget: e.target,
-    newPiece: true,
-    force: !!force,
-    keyHasChanged: false,
-    originalStackKey: originalKey, // Add this to track if dragging whole stack
-  };
-  processDrag(s);
 }
 
 function processDrag(s: State): void {
