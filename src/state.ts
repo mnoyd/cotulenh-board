@@ -37,17 +37,6 @@ export interface HeadlessState {
   };
   showAirDefenseInfluence: boolean; // show air defense influence zones when air_force is selected
   viewOnly: boolean; // don't bind events: the user will never be able to move pieces around
-  premovable: {
-    enabled: boolean; // allow premoves for color that can not move
-    showDests: boolean; // whether to add the premove-dest class on squares
-    dests?: cg.Key[]; // premove destinations for the current selection
-    customDests?: cg.Dests; // use custom valid premoves. {"a2" ["a3" "a4"] "b1" ["a3" "c3"]}
-    current?: cg.KeyPair; // keys of the current saved premove ["e2" "e4"]
-    events: {
-      set?: (orig: cg.Key, dest: cg.Key, metadata?: cg.SetPremoveMetadata) => void; // called after the premove has been set
-      unset?: () => void; // called after the premove has been unset
-    };
-  };
   draggable: {
     enabled: boolean; // allow moves & premoves to use drag'n drop
     distance: number; // minimum distance to initiate a drag; in pixels
@@ -55,18 +44,6 @@ export interface HeadlessState {
     showGhost: boolean; // show ghost of piece being dragged
     deleteOnDropOff: boolean; // delete a piece when it is dropped off the board
     current?: DragCurrent;
-  };
-  predroppable: {
-    enabled: boolean; // allow predrops for color that can not move
-    current?: {
-      // current saved predrop {role: 'knight'; key: 'e4'}
-      role: cg.Role;
-      key: cg.Key;
-    };
-    events: {
-      set?: (role: cg.Role, key: cg.Key) => void; // called after the predrop has been set
-      unset?: () => void; // called after the predrop has been unset
-    };
   };
   dropmode: {
     active: boolean;
@@ -151,15 +128,7 @@ export function defaults(): HeadlessState {
       showDests: true,
       events: {},
     },
-    premovable: {
-      enabled: true,
-      showDests: true,
-      events: {},
-    },
-    predroppable: {
-      enabled: false,
-      events: {},
-    },
+
     events: {},
     stats: {
       dragged: false,
