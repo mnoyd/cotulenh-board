@@ -45,45 +45,33 @@ export function start(s: State, e: cg.MouchEvent): void {
 
       if (pieceIndex === -1) {
         // Carrier piece clicked
-        if (e.ctrlKey || e.shiftKey) {
-          // Multi-select the stack (existing logic)
-          board.selectSquare(s, key);
-        } else {
-          // --- Select the entire stack for a subsequent move ---
-          s.selected = key; // Select the square where the stack is
-          s.selectedPieceInfo = undefined; // IMPORTANT: Clear stack info to indicate moving the whole piece
-          // No drag initiated here, just selection set.
-          // The next click on a valid square will trigger the move via selectSquare -> userMove -> baseMove
-        }
+
+        // --- Select the entire stack for a subsequent move ---
+        s.selected = key; // Select the square where the stack is
+        s.selectedPieceInfo = undefined; // IMPORTANT: Clear stack info to indicate moving the whole piece
+        // No drag initiated here, just selection set.
+        // The next click on a valid square will trigger the move via selectSquare -> userMove -> baseMove
       } else if (pieceIndex !== undefined) {
         // Carried piece clicked (logic implemented previously)
-        if (e.ctrlKey || e.shiftKey) {
-          s.selectedPieceInfo = {
-            originalKey: key,
-            originalPiece: piece,
-            carriedPieceIndex: pieceIndex,
-            isFromStack: true,
-          };
-          s.selected = key;
-          s.dom.redraw();
-        } else {
-          // --- Select the carried piece for a subsequent move ---
-          s.selectedPieceInfo = {
-            originalKey: key, // Key of the stack
-            originalPiece: piece, // The whole stack piece
-            carriedPieceIndex: pieceIndex, // Index of the selected piece within carrying array
-            isFromStack: true,
-          };
-          s.selected = key; // Select the square where the stack is
-          // No drag initiated here, just selection set.
-          // The next click on a valid square will trigger the move via selectSquare -> userMove -> baseMove
-        }
+
+        // --- Select the carried piece for a subsequent move ---
+        s.selectedPieceInfo = {
+          originalKey: key, // Key of the stack
+          originalPiece: piece, // The whole stack piece
+          carriedPieceIndex: pieceIndex, // Index of the selected piece within carrying array
+          isFromStack: true,
+        };
+        s.selected = key; // Select the square where the stack is
+        // No drag initiated here, just selection set.
+        // The next click on a valid square will trigger the move via selectSquare -> userMove -> baseMove
       }
 
       removeCombinedPiecePopup(s); // Close popup after interaction
       // No return here, allow flow to continue if needed, though popup interaction usually ends here.
       // However, we need redraw after selection and popup removal.
       s.dom.redraw();
+
+      // TODO: Add drag support to combined pieces
       return; // Explicitly return after handling popup interaction.
     } else {
       // Click outside popup, remove it
