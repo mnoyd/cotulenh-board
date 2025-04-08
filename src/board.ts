@@ -26,10 +26,12 @@ export function setCheck(state: HeadlessState, color: cg.Color | boolean): void 
 
 export function setSelected(state: HeadlessState, key: cg.Key): void {
   state.selected = key;
+  // Do NOT reset selectedPieceInfo here - this was causing issues with carried pieces
 }
 
 export function unselect(state: HeadlessState): void {
   state.selected = undefined;
+  state.selectedPieceInfo = undefined; // Clear selectedPieceInfo to ensure we fully exit selection mode
   state.hold.cancel();
 }
 

@@ -25,6 +25,7 @@ export interface DragCurrent {
   keyHasChanged: boolean; // whether the drag has left the orig key
   temporaryPos?: cg.Key; // potential new position
   originalStackKey?: cg.Key; // Add this to track if dragging whole stack
+  carriedPieceIndex?: number; // Add this to track the specific piece being dragged from a stack
 }
 
 export function start(s: State, e: cg.MouchEvent): void {
@@ -43,42 +44,103 @@ export function start(s: State, e: cg.MouchEvent): void {
       if (!s.combinedPiecePopup) return;
       const { key, piece } = s.combinedPiecePopup;
 
+      // Immediately remove the popup to not interfere with the subsequent operations
+      removeCombinedPiecePopup(s);
+
       if (pieceIndex === -1) {
         // Carrier piece clicked
+        // First, clear any previous selection info to avoid interference
+        s.selectedPieceInfo = undefined;
+        s.selected = key;
 
-        // --- Select the entire stack for a subsequent move ---
-        s.selected = key; // Select the square where the stack is
-        s.selectedPieceInfo = undefined; // IMPORTANT: Clear stack info to indicate moving the whole piece
-        // No drag initiated here, just selection set.
-        // The next click on a valid square will trigger the move via selectSquare -> userMove -> baseMove
+        // Check if we can drag
+        const element = pieceElementByKey(s, key);
+        if (element && board.isDraggable(s, key)) {
+          s.draggable.current = {
+            orig: key,
+            piece,
+            origPos: position,
+            pos: position,
+            started: true, // Force start the drag immediately
+            element,
+            previouslySelected: undefined,
+            originTarget: e.target,
+            keyHasChanged: false,
+            originalStackKey: key,
+            carriedPieceIndex: undefined,
+          };
+
+          // Setup drag visual elements
+          element.cgDragging = true;
+          element.classList.add('dragging');
+
+          // Place ghost for visual feedback
+          const ghost = s.dom.elements.ghost;
+          if (ghost) {
+            const bounds = s.dom.bounds();
+            ghost.className = `ghost ${piece.color} ${piece.role}`;
+            util.translate(ghost, util.posToTranslate(bounds)(util.key2pos(key), board.redPov(s)));
+            util.setVisible(ghost, true);
+          }
+
+          // Process drag to maintain position
+          processDrag(s);
+          s.dom.redraw();
+        }
       } else if (pieceIndex !== undefined) {
-        // Carried piece clicked (logic implemented previously)
+        // Carried piece clicked
+        const carriedPiece = piece.carrying?.[pieceIndex];
+        if (!carriedPiece) return;
 
-        // --- Select the carried piece for a subsequent move ---
+        // Set the selectedPieceInfo to the carried piece
         s.selectedPieceInfo = {
-          originalKey: key, // Key of the stack
-          originalPiece: piece, // The whole stack piece
-          carriedPieceIndex: pieceIndex, // Index of the selected piece within carrying array
+          originalKey: key,
+          originalPiece: piece,
+          carriedPieceIndex: pieceIndex,
           isFromStack: true,
         };
-        s.selected = key; // Select the square where the stack is
-        // No drag initiated here, just selection set.
-        // The next click on a valid square will trigger the move via selectSquare -> userMove -> baseMove
+        s.selected = key;
+
+        // Check if we can drag
+        const element = pieceElementByKey(s, key);
+        if (element && board.isDraggable(s, key)) {
+          s.draggable.current = {
+            orig: key,
+            piece: carriedPiece,
+            origPos: position,
+            pos: position,
+            started: true, // Force start the drag immediately
+            element,
+            previouslySelected: undefined,
+            originTarget: e.target,
+            keyHasChanged: false,
+            carriedPieceIndex: pieceIndex,
+            originalStackKey: key,
+          };
+
+          // Setup drag visual elements
+          element.cgDragging = true;
+          element.classList.add('dragging');
+
+          // Place ghost for visual feedback
+          const ghost = s.dom.elements.ghost;
+          if (ghost && carriedPiece) {
+            const bounds = s.dom.bounds();
+            ghost.className = `ghost ${carriedPiece.color} ${carriedPiece.role}`;
+            util.translate(ghost, util.posToTranslate(bounds)(util.key2pos(key), board.redPov(s)));
+            util.setVisible(ghost, true);
+          }
+
+          // Process drag to maintain position
+          processDrag(s);
+          s.dom.redraw();
+        }
       }
-
-      removeCombinedPiecePopup(s); // Close popup after interaction
-      // No return here, allow flow to continue if needed, though popup interaction usually ends here.
-      // However, we need redraw after selection and popup removal.
-      s.dom.redraw();
-
-      // TODO: Add drag support to combined pieces
-      return; // Explicitly return after handling popup interaction.
+      return;
     } else {
-      // Click outside popup, remove it
+      // Click outside popup, just remove it
       removeCombinedPiecePopup(s);
     }
-    // Remove this return statement to allow normal piece selection
-    // return;
   }
 
   const bounds = s.dom.bounds(),
@@ -238,46 +300,55 @@ export function end(s: State, e: cg.MouchEvent): void {
   const dest = board.getKeyAtDomPos(eventPos, board.redPov(s), s.dom.bounds());
 
   if (dest && cur.started && cur.orig !== dest) {
-    // Handle piece from stack being dragged
-    if (s.selectedPieceInfo?.isFromStack && cur.newPiece) {
-      const { originalKey } = s.selectedPieceInfo;
-
-      // Treat this as a move from the original position to the destination
-      board.userMove(s, originalKey, dest);
-      s.pieces.delete('11-12');
-      // The userMove function in board.ts will handle removing the piece from the stack
-      // and placing it at the destination, including captures and combinations
+    // Handle carried piece being dragged from a stack
+    if (cur.carriedPieceIndex !== undefined && cur.originalStackKey) {
+      // This is a carried piece being dragged from a stack
+      // Always refresh the selectedPieceInfo to match the current drag state
+      const originalPiece = s.pieces.get(cur.originalStackKey);
+      if (originalPiece && originalPiece.carrying && originalPiece.carrying.length > cur.carriedPieceIndex) {
+        // Set up selectedPieceInfo to match the dragged carried piece
+        s.selectedPieceInfo = {
+          originalKey: cur.originalStackKey,
+          originalPiece: originalPiece,
+          carriedPieceIndex: cur.carriedPieceIndex,
+          isFromStack: true,
+        };
+        s.selected = cur.originalStackKey; // Make sure selected is properly set
+        // Now call userMove with the correct origin key
+        board.userMove(s, cur.originalStackKey, dest);
+      }
     } else if (cur.originalStackKey) {
-      // Handle dragging whole stack
+      // Handle dragging whole stack - explicitly clear selectedPieceInfo
+      s.selectedPieceInfo = undefined; // Ensure we're moving the whole stack, not a piece
+      s.selected = cur.originalStackKey; // Set the selection correctly
       board.userMove(s, cur.originalStackKey, dest);
-      s.pieces.delete('11-12');
     } else if (cur.newPiece) {
       board.dropNewPiece(s, cur.orig, dest, cur.force);
     } else {
       s.stats.ctrlKey = e.ctrlKey;
       if (board.userMove(s, cur.orig, dest)) s.stats.dragged = true;
     }
-  } else if (!dest && !cur.newPiece) {
-    if (cur.originalStackKey) {
-      s.pieces.delete('11-12');
+  } else {
+    // If a drag was started but not dropped on a valid destination,
+    // reset the piece to original position and clear the drag state
+    if (cur.started && !cur.newPiece) {
+      // Reset the piece to original position
+      if (typeof cur.element === 'function') {
+        const found = cur.element();
+        if (!found) return;
+        found.cgDragging = true;
+        found.classList.add('dragging');
+        cur.element = found;
+      }
+      const origPos = util.posToTranslate(s.dom.bounds())(util.key2pos(cur.orig), board.redPov(s));
+      util.translate(cur.element, origPos);
+    } else if (cur.newPiece) {
+      s.pieces.delete(cur.orig);
+    } else if (s.draggable.deleteOnDropOff && !dest) {
+      s.pieces.delete(cur.orig);
+      board.callUserFunction(s.events.change);
     }
-    // Reset the piece to original position
-    if (typeof cur.element === 'function') {
-      const found = cur.element();
-      if (!found) return;
-      found.cgDragging = true;
-      found.classList.add('dragging');
-      cur.element = found;
-    }
-    const origPos = util.posToTranslate(s.dom.bounds())(util.key2pos(cur.orig), board.redPov(s));
-    util.translate(cur.element, origPos);
-  } else if (cur.newPiece) {
-    s.pieces.delete(cur.orig);
-  } else if (s.draggable.deleteOnDropOff && !dest) {
-    s.pieces.delete(cur.orig);
-    board.callUserFunction(s.events.change);
   }
-
   if ((cur.orig === cur.previouslySelected || cur.keyHasChanged) && (cur.orig === dest || !dest))
     board.unselect(s);
   else if (!s.selectable.enabled) board.unselect(s);
@@ -325,6 +396,7 @@ function pieceElementByKey(s: State, key: cg.Key): cg.PieceNode | undefined {
 
 export function unselect(state: HeadlessState): void {
   state.selected = undefined;
+  state.selectedPieceInfo = undefined; // Clear selectedPieceInfo to ensure we fully exit selection mode
   state.hold.cancel();
 }
 
