@@ -28,6 +28,10 @@ export interface DragCurrent {
   carriedPieceIndex?: number; // Add this to track the specific piece being dragged from a stack
 }
 
+// Toggle action type to ensure consistent behavior
+// If the last action was a drag, next one will be selection and vice versa
+let lastActionWasDrag = false;
+
 export function start(s: State, e: cg.MouchEvent): void {
   if (!(s.trustAllEvents || e.isTrusted)) return; // only trust when trustAllEvents is enabled
   if (e.buttons !== undefined && e.buttons > 1) return; // only touch or left click
@@ -44,24 +48,36 @@ export function start(s: State, e: cg.MouchEvent): void {
       if (!s.combinedPiecePopup) return;
       const { key, piece } = s.combinedPiecePopup;
 
-      // Immediately remove the popup to not interfere with the subsequent operations
+      // Remove the popup first
       removeCombinedPiecePopup(s);
+
+      // Clear any existing drag state
+      if (s.draggable.current) {
+        s.draggable.current = undefined;
+        removeDragElements(s);
+      }
 
       if (pieceIndex === -1) {
         // Carrier piece clicked
-        // First, clear any previous selection info to avoid interference
+
+        // Toggle behavior - drag on first click, select on second, etc.
+        const shouldDrag = !lastActionWasDrag;
+        lastActionWasDrag = shouldDrag;
+
+        // Always clear selection info for carrier
         s.selectedPieceInfo = undefined;
         s.selected = key;
 
-        // Check if we can drag
+        // Set up for drag or just selection
         const element = pieceElementByKey(s, key);
-        if (element && board.isDraggable(s, key)) {
+        if (element && board.isDraggable(s, key) && shouldDrag) {
+          // Drag mode
           s.draggable.current = {
             orig: key,
             piece,
             origPos: position,
             pos: position,
-            started: true, // Force start the drag immediately
+            started: true, // Force immediate drag
             element,
             previouslySelected: undefined,
             originTarget: e.target,
@@ -70,11 +86,10 @@ export function start(s: State, e: cg.MouchEvent): void {
             carriedPieceIndex: undefined,
           };
 
-          // Setup drag visual elements
           element.cgDragging = true;
           element.classList.add('dragging');
 
-          // Place ghost for visual feedback
+          // Set up the ghost
           const ghost = s.dom.elements.ghost;
           if (ghost) {
             const bounds = s.dom.bounds();
@@ -83,16 +98,25 @@ export function start(s: State, e: cg.MouchEvent): void {
             util.setVisible(ghost, true);
           }
 
-          // Process drag to maintain position
           processDrag(s);
-          s.dom.redraw();
+          console.log('Carrier DRAG mode');
+        } else {
+          // Selection mode - just leave it selected
+          console.log('Carrier SELECT mode');
         }
       } else if (pieceIndex !== undefined) {
         // Carried piece clicked
         const carriedPiece = piece.carrying?.[pieceIndex];
-        if (!carriedPiece) return;
+        if (!carriedPiece) {
+          s.dom.redraw();
+          return;
+        }
 
-        // Set the selectedPieceInfo to the carried piece
+        // Toggle behavior for carried pieces too
+        const shouldDrag = !lastActionWasDrag;
+        lastActionWasDrag = shouldDrag;
+
+        // Always set up the selection state for carried piece
         s.selectedPieceInfo = {
           originalKey: key,
           originalPiece: piece,
@@ -101,15 +125,16 @@ export function start(s: State, e: cg.MouchEvent): void {
         };
         s.selected = key;
 
-        // Check if we can drag
+        // Set up for drag or just selection
         const element = pieceElementByKey(s, key);
-        if (element && board.isDraggable(s, key)) {
+        if (element && board.isDraggable(s, key) && shouldDrag) {
+          // Drag mode
           s.draggable.current = {
             orig: key,
             piece: carriedPiece,
             origPos: position,
             pos: position,
-            started: true, // Force start the drag immediately
+            started: true, // Force immediate drag
             element,
             previouslySelected: undefined,
             originTarget: e.target,
@@ -118,11 +143,10 @@ export function start(s: State, e: cg.MouchEvent): void {
             originalStackKey: key,
           };
 
-          // Setup drag visual elements
           element.cgDragging = true;
           element.classList.add('dragging');
 
-          // Place ghost for visual feedback
+          // Set up the ghost
           const ghost = s.dom.elements.ghost;
           if (ghost && carriedPiece) {
             const bounds = s.dom.bounds();
@@ -131,14 +155,18 @@ export function start(s: State, e: cg.MouchEvent): void {
             util.setVisible(ghost, true);
           }
 
-          // Process drag to maintain position
           processDrag(s);
-          s.dom.redraw();
+          console.log('Carried DRAG mode');
+        } else {
+          // Selection mode - just leave it selected
+          console.log('Carried SELECT mode');
         }
       }
+
+      s.dom.redraw();
       return;
     } else {
-      // Click outside popup, just remove it
+      // Click outside popup, remove it and reset toggle
       removeCombinedPiecePopup(s);
     }
   }
@@ -299,6 +327,9 @@ export function end(s: State, e: cg.MouchEvent): void {
   const eventPos = util.eventPosition(e) || cur.pos;
   const dest = board.getKeyAtDomPos(eventPos, board.redPov(s), s.dom.bounds());
 
+  // After any drag operation, update the toggle flag
+  lastActionWasDrag = true;
+
   if (dest && cur.started && cur.orig !== dest) {
     // Handle carried piece being dragged from a stack
     if (cur.carriedPieceIndex !== undefined && cur.originalStackKey) {
@@ -336,10 +367,14 @@ export function end(s: State, e: cg.MouchEvent): void {
       if (typeof cur.element === 'function') {
         const found = cur.element();
         if (!found) return;
-        found.cgDragging = true;
-        found.classList.add('dragging');
+        found.cgDragging = false;
+        found.classList.remove('dragging');
         cur.element = found;
+      } else {
+        cur.element.cgDragging = false;
+        cur.element.classList.remove('dragging');
       }
+
       const origPos = util.posToTranslate(s.dom.bounds())(util.key2pos(cur.orig), board.redPov(s));
       util.translate(cur.element, origPos);
     } else if (cur.newPiece) {
@@ -349,12 +384,15 @@ export function end(s: State, e: cg.MouchEvent): void {
       board.callUserFunction(s.events.change);
     }
   }
+
+  // Handle selection state when piece is dropped in original position or invalid position
   if ((cur.orig === cur.previouslySelected || cur.keyHasChanged) && (cur.orig === dest || !dest))
     board.unselect(s);
   else if (!s.selectable.enabled) board.unselect(s);
 
   removeDragElements(s);
 
+  // Clean up air defense influence zones if needed
   if (
     s.draggable.current &&
     s.showAirDefenseInfluence &&
@@ -396,7 +434,16 @@ function pieceElementByKey(s: State, key: cg.Key): cg.PieceNode | undefined {
 
 export function unselect(state: HeadlessState): void {
   state.selected = undefined;
-  state.selectedPieceInfo = undefined; // Clear selectedPieceInfo to ensure we fully exit selection mode
+  // Only clear selectedPieceInfo when it's explicitly related to the selection
+  // This prevents issues with stack pieces not being able to move after selection
+  if (state.selectedPieceInfo) {
+    // Keep the state if we're in the middle of a carrier/carried piece operation
+    // where selectSquare might be called multiple times
+    const inStackOperation = state.selectedPieceInfo.isFromStack;
+    if (!inStackOperation) {
+      state.selectedPieceInfo = undefined;
+    }
+  }
   state.hold.cancel();
 }
 

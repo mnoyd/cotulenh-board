@@ -142,54 +142,35 @@ export function baseMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): cg.P
   return captured || true;
 }
 
-function baseUserMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): cg.Piece | boolean {
-  const result = baseMove(state, orig, dest);
-  if (result) {
-    state.movable.dests = undefined;
-    state.turnColor = opposite(state.turnColor);
-    state.animation.current = undefined;
-  }
-  return result;
-}
+// Note: function removed as it was replaced by direct calls to baseMove
+// export function baseUserMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): boolean | cg.Piece {
+//  return baseMove(state, orig, dest);
+//}
+
 export function userMove(state: HeadlessState, orig: cg.Key, dest: cg.Key): boolean {
-  // Special handling for stack piece moves
+  // Handle moving a piece from a stack directly
   if (state.selectedPieceInfo?.isFromStack && orig === state.selectedPieceInfo.originalKey) {
     if (canMove(state, orig, dest)) {
       const result = baseMove(state, orig, dest);
       if (result) {
-        const holdTime = state.hold.stop();
+        // Successfully moved the carried piece - clear selection state
         unselect(state);
-        const metadata: cg.MoveMetadata = {
-          premove: false,
-          ctrlKey: state.stats.ctrlKey,
-          holdTime,
-        };
-        if (result !== true) metadata.captured = result;
-        callUserFunction(state.movable.events.after, orig, dest, metadata);
         return true;
       }
+      return false;
     }
-    unselect(state);
     return false;
   }
 
-  // Regular piece move handling
   if (canMove(state, orig, dest)) {
-    const result = baseUserMove(state, orig, dest);
+    const result = baseMove(state, orig, dest);
     if (result) {
-      const holdTime = state.hold.stop();
+      // Successfully moved the piece - clear selection state completely
       unselect(state);
-      const metadata: cg.MoveMetadata = {
-        premove: false,
-        ctrlKey: state.stats.ctrlKey,
-        holdTime,
-      };
-      if (result !== true) metadata.captured = result;
-      callUserFunction(state.movable.events.after, orig, dest, metadata);
       return true;
     }
+    return false;
   }
-  unselect(state);
   return false;
 }
 
