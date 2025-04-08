@@ -84,6 +84,8 @@ export interface HeadlessState {
     piece: cg.Piece;
     containerEl: HTMLElement;
   };
+  // Track the last interaction mode for carrier pieces to ensure consistent alternating behavior
+  lastInteractionWasDrag?: boolean;
 }
 
 export interface State extends HeadlessState {

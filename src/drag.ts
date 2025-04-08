@@ -30,7 +30,7 @@ export interface DragCurrent {
 
 // Toggle action type to ensure consistent behavior
 // If the last action was a drag, next one will be selection and vice versa
-let lastActionWasDrag = false;
+// Note: removed global variable in favor of state property
 
 export function start(s: State, e: cg.MouchEvent): void {
   if (!(s.trustAllEvents || e.isTrusted)) return; // only trust when trustAllEvents is enabled
@@ -61,8 +61,8 @@ export function start(s: State, e: cg.MouchEvent): void {
         // Carrier piece clicked
 
         // Toggle behavior - drag on first click, select on second, etc.
-        const shouldDrag = !lastActionWasDrag;
-        lastActionWasDrag = shouldDrag;
+        const shouldDrag = !s.lastInteractionWasDrag;
+        s.lastInteractionWasDrag = shouldDrag;
 
         // Always clear selection info for carrier
         s.selectedPieceInfo = undefined;
@@ -113,8 +113,8 @@ export function start(s: State, e: cg.MouchEvent): void {
         }
 
         // Toggle behavior for carried pieces too
-        const shouldDrag = !lastActionWasDrag;
-        lastActionWasDrag = shouldDrag;
+        const shouldDrag = !s.lastInteractionWasDrag;
+        s.lastInteractionWasDrag = shouldDrag;
 
         // Always set up the selection state for carried piece
         s.selectedPieceInfo = {
@@ -328,7 +328,7 @@ export function end(s: State, e: cg.MouchEvent): void {
   const dest = board.getKeyAtDomPos(eventPos, board.redPov(s), s.dom.bounds());
 
   // After any drag operation, update the toggle flag
-  lastActionWasDrag = true;
+  s.lastInteractionWasDrag = true;
 
   if (dest && cur.started && cur.orig !== dest) {
     // Handle carried piece being dragged from a stack
